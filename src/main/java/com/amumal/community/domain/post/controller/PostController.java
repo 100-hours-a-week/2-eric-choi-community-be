@@ -3,21 +3,17 @@ package com.amumal.community.domain.post.controller;
 import com.amumal.community.domain.post.dto.request.PostRequestDto;
 import com.amumal.community.domain.post.dto.response.PostResponseDto;
 import com.amumal.community.domain.post.service.PostService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/posts")
+@RequiredArgsConstructor
 public class PostController {
 
     private final PostService postService;
-
-    @Autowired
-    public PostController(PostService postService) {
-        this.postService = postService;
-    }
 
     // 게시글 작성
     @PostMapping

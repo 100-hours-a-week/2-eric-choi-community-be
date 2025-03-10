@@ -3,19 +3,15 @@ package com.amumal.community.domain.user.controller;
 import com.amumal.community.domain.user.dto.request.UserRequestDto;
 import com.amumal.community.domain.user.dto.response.UserResponseDto;
 import com.amumal.community.domain.user.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
-
-    @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
 
     @PostMapping("/new")
     public UserResponseDto registerUser(@RequestBody UserRequestDto userRequestDto) {

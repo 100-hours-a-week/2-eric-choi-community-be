@@ -6,23 +6,18 @@ import com.amumal.community.domain.post.entity.Post;
 import com.amumal.community.domain.post.repository.PostRepository;
 import com.amumal.community.domain.user.entity.User;
 import com.amumal.community.domain.user.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-
-    @Autowired
-    public PostService(PostRepository postRepository, UserRepository userRepository) {
-        this.postRepository = postRepository;
-        this.userRepository = userRepository;
-    }
 
     // 게시글 생성
     public PostResponseDto createPost(PostRequestDto postRequestDto) {

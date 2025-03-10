@@ -4,18 +4,14 @@ import com.amumal.community.domain.user.dto.request.UserRequestDto;
 import com.amumal.community.domain.user.dto.response.UserResponseDto;
 import com.amumal.community.domain.user.entity.User;
 import com.amumal.community.domain.user.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
-
-    @Autowired
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
 
     // 회원가입
     public UserResponseDto registerUser(UserRequestDto userRequestDto) {
