@@ -40,7 +40,7 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/no-auth/logout")
+    @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session != null) {

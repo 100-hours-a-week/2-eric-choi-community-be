@@ -1,56 +1,102 @@
 package com.amumal.community.domain.post.entity;
 
 import com.amumal.community.domain.user.entity.User;
+import com.amumal.community.domain.post.dto.request.PostRequest;
+import com.amumal.community.global.entity.BaseEntity;
+import com.amumal.community.global.enums.CustomResponseStatus;
+import com.amumal.community.global.exception.CustomException;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 @Entity
-@Table(name = "post")
 @Getter
-@Setter
-public class Post {
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Table(name = "posts")
+public class Post extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = "post_id")
     private Long id;
 
-    @Column(name = "title", length = 100, nullable = false)
+    // 작성자: User 엔티티와 다대일 관계
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @Column(name = "titles", length = 30, nullable = false)
     private String title;
 
-    @Column(name = "content", columnDefinition = "TEXT", nullable = false)
+    @Lob
+    @Column(name = "contents", nullable = false)
     private String content;
 
-    @Column(name = "like_count", nullable = false)
-    private int likeCount;
+    @Column(name = "img", length = 1000)
+    private String image;
 
-    @Column(name = "comment_count", nullable = false)
-    private int commentCount;
-
-    @Column(name = "view_count", nullable = false)
+    @Column(name = "view", nullable = false)
     private int viewCount;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User author;  // 작성자 (User 엔티티와 관계 설정)
+    // 댓글: 일대다 관계 (Cascade, orphanRemoval 적용)
+    @OneToMany(mappedBy = "post", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    // 좋아요: 일대다 관계 (Cascade, orphanRemoval 적용)
+    @OneToMany(mappedBy = "post", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
+    private List<Likes> likes = new ArrayList<>();
 
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    @PrePersist
+    // BaseEntity의 onCreate() 후 추가 초기화
+    @Override
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        super.onCreate();  // createdAt, updatedAt 설정
+        this.viewCount = 0;
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+    // 조회수 증가 메서드
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
+
+    /**
+     * 게시글 수정 메서드.
+     * 접근한 사용자가 작성자와 일치하는지 검증한 후 제목, 내용, 이미지 정보를 업데이트합니다.
+     *
+     * @param modifyRequest 수정 요청 DTO
+     * @param accessUser 접근한 사용자(User)
+     */
+    public void update(PostRequest modifyRequest, User accessUser) {
+        validateSameUser(accessUser);
+        this.title = modifyRequest.title();
+        this.content = modifyRequest.content();
+        this.image = modifyRequest.image();
+    }
+
+    /**
+     * 게시글 삭제(논리 삭제) 메서드.
+     * 접근한 사용자가 작성자와 일치하는지 검증한 후 논리 삭제 처리(BaseEntity.delete())를 수행합니다.
+     *
+     * @param accessUser 접근한 사용자(User)
+     */
+    public void safeDelete(User accessUser) {
+        validateSameUser(accessUser);
+        this.delete();
+    }
+
+    /**
+     * 작성자 검증 메서드.
+     * 접근한 사용자의 ID와 게시글 작성자의 ID가 다르면 예외를 발생시킵니다.
+     *
+     * @param accessUser 접근한 사용자(User)
+     */
+    public void validateSameUser(User accessUser) {
+        if (!Objects.equals(this.user.getId(), accessUser.getId())) {
+            throw new CustomException(CustomResponseStatus.UNAUTHORIZED_REQUEST);
+        }
     }
 }
