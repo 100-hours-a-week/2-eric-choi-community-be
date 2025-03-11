@@ -2,9 +2,8 @@ package com.amumal.community.global.enums;
 
 public enum CustomResponseStatus {
     UNAUTHORIZED_REQUEST(401, "Unauthorized request"),
-    MEMBER_NOT_EXIST(404, "Member does not exist"),
-    // 필요에 따라 다른 상태 코드를 추가하세요.
-    ;
+    NOT_FOUND(404, "Resource not found"),
+    INTERNAL_SERVER_ERROR(500, "Internal server error");
 
     private final int code;
     private final String message;
