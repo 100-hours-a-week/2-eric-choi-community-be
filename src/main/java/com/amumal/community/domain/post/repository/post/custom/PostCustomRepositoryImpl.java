@@ -8,7 +8,6 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import java.util.List;
-
 import static com.amumal.community.domain.post.entity.QPost.post;
 import static com.amumal.community.domain.post.entity.QComment.comment;
 import static com.amumal.community.domain.post.entity.QLikes.likes;
@@ -27,11 +26,11 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
         return queryFactory
                 .select(Projections.constructor(
                         PostDetailResponse.class,
-                        post.id,                           // 게시글 ID
-                        post.title,                        // 제목
-                        post.content,                      // 내용
-                        post.createdAt,                    // 생성일시
-                        post.viewCount,                    // 조회수
+                        post.id,
+                        post.title,
+                        post.content,
+                        post.createdAt,
+                        post.viewCount,
                         JPAExpressions.select(likes.id.count().intValue())
                                 .from(likes)
                                 .where(likes.post.id.eq(postId)),
@@ -40,8 +39,8 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
                                 .where(comment.post.id.eq(postId)),
                         Projections.constructor(
                                 PostDetailResponse.AuthorInfo.class,
-                                post.user.nickname,              // 작성자 닉네임
-                                post.user.profileImage           // 작성자 프로필 이미지
+                                post.user.nickname,
+                                post.user.profileImage
                         )
                 ))
                 .from(post)
@@ -69,7 +68,6 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
                 ))
                 .from(post)
                 .leftJoin(post.user, user)
-                // leftJoin likes, comment 조인은 집계에 영향을 주지 않도록 별도 groupBy 처리
                 .leftJoin(likes).on(post.id.eq(likes.post.id))
                 .leftJoin(comment).on(post.id.eq(comment.post.id))
                 .groupBy(post.id, post.user.nickname, post.user.profileImage)
