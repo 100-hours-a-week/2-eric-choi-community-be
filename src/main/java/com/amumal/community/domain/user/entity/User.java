@@ -2,6 +2,7 @@ package com.amumal.community.domain.user.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
@@ -10,7 +11,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(name = "users")
-public class User {
+public class User implements Serializable { // Serializable 인터페이스 추가
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,7 +28,8 @@ public class User {
     @Column(length = 20, nullable = false)
     private String password;
 
-    @Column(name = "profileImage", length = 1000, nullable = false)
+    @Lob
+    @Column(name = "profile_image", columnDefinition = "LONGTEXT", nullable = false)
     private String profileImage;
 
     @Column(name = "created_at", nullable = false, updatable = false)

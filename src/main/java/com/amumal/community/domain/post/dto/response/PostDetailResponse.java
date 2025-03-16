@@ -10,13 +10,14 @@ public record PostDetailResponse(
         Long postId,
         String title,
         String content,
+        String image,
         LocalDateTime createdAt,
         Integer viewCount,
         Integer likeCount,
         Integer commentCount,
         AuthorInfo author,
         List<CommentResponse> comments
-) {
+    ) {
     @Builder
     public record AuthorInfo(
             String nickname,

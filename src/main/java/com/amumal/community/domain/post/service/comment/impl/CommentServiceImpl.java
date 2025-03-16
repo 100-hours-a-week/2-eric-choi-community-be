@@ -2,9 +2,10 @@ package com.amumal.community.domain.post.service.comment.impl;
 
 import com.amumal.community.domain.post.dto.request.CommentRequest;
 import com.amumal.community.domain.post.entity.Comment;
+import com.amumal.community.domain.post.entity.Post;
 import com.amumal.community.domain.post.repository.comment.CommentRepository;
+import com.amumal.community.domain.post.repository.post.PostRepository;
 import com.amumal.community.domain.post.service.comment.CommentService;
-import com.amumal.community.domain.post.service.post.PostCommandService;
 import com.amumal.community.global.exception.CustomException;
 import com.amumal.community.global.enums.CustomResponseStatus;
 import com.amumal.community.domain.user.entity.User;
@@ -18,12 +19,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
-    private final PostCommandService postCommandService; // Post 조회를 위해
+    // Post 조회를 위해 PostRepository 직접 주입 (CQRS의 조회 부분은 QueryService나 Repository에서 처리)
+    private final PostRepository postRepository;
 
     @Override
     public Long createComment(Long postId, CommentRequest request, User currentUser) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(CustomResponseStatus.NOT_FOUND));
         Comment comment = Comment.builder()
-                .post(postCommandService.findById(postId))
+                .post(post)
                 .user(currentUser)
                 .content(request.content())
                 .build();

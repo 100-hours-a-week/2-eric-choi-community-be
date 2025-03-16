@@ -31,7 +31,12 @@ public class PostQueryServiceImpl implements PostQueryService {
     }
 
     @Override
+    @Transactional // 중요: 수정 작업이므로 트랜잭션 필요
     public PostDetailResponse getPostDetailInfoById(Long postId) {
+        // 조회수 증가
+        postRepository.incrementViewCount(postId);
+
+        // 게시글 상세 정보 조회
         PostDetailResponse detailResponse = postRepository.getPostDetailInfoById(postId);
         if(detailResponse == null) {
             throw new CustomException(CustomResponseStatus.NOT_FOUND);
