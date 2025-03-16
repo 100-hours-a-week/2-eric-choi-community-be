@@ -6,7 +6,7 @@ public class CustomException extends RuntimeException {
     private final CustomResponseStatus status;
 
     public CustomException(CustomResponseStatus status) {
-        super(status.getMessage());
+        super(status.getCode()); // getMessage() 대신 getCode() 사용
         this.status = status;
     }
 

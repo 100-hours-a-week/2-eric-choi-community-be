@@ -30,7 +30,8 @@ public class User implements Serializable { // Serializable 인터페이스 추�
 
     @Lob
     @Column(name = "profile_image", columnDefinition = "LONGTEXT", nullable = false)
-    private String profileImage;
+    @Builder.Default
+    private String profileImage = "";
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

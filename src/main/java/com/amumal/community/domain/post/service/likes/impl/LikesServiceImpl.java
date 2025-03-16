@@ -19,14 +19,18 @@ import java.util.Optional;
 public class LikesServiceImpl implements LikesService {
 
     private final LikesRepository likesRepository;
-    private final PostRepository postRepository; // Post 조회를 위해 Repository 직접 주입
+    private final PostRepository postRepository;
 
     @Override
     public void addLike(Long postId, LikeRequest request, User currentUser) {
+        // 이미 좋아요를 눌렀는지 확인
         if (likesRepository.existsByPostIdAndUserId(postId, currentUser.getId())) {
-            throw new CustomException(CustomResponseStatus.UNAUTHORIZED_REQUEST);
+            // 예외를 발생시키는 대신 좋아요를 취소
+            removeLike(postId, currentUser.getId(), currentUser);
+            return;
         }
-        // PostCommandService 대신 PostRepository를 통해 Post 엔티티를 조회
+
+        // 새로운 좋아요 추가
         var post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(CustomResponseStatus.NOT_FOUND));
         Likes like = Likes.builder()
@@ -40,10 +44,9 @@ public class LikesServiceImpl implements LikesService {
     public void removeLike(Long postId, Long userId, User currentUser) {
         System.out.println("DEBUG: currentUser.getId() = " + currentUser.getId());
         System.out.println("DEBUG: userId = " + userId);
-        // if (!currentUser.getId().equals(userId)) { ... }  // 이 조건은 주석 처리
+
         Optional<Likes> likeOpt = likesRepository.findByPostIdAndUserId(postId, userId);
         Likes like = likeOpt.orElseThrow(() -> new CustomException(CustomResponseStatus.NOT_FOUND));
         likesRepository.delete(like);
     }
-
 }

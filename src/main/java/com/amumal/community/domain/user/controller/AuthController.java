@@ -36,8 +36,8 @@ public class AuthController {
         // 로그인 처리
         User user = authService.login(loginRequest);
 
-        // 세션에 사용자 ID만 저장
-        SessionUtil.setLoggedInUserId(request, user.getId());
+        // 세션에 사용자 정보 저장
+        SessionUtil.setLoggedInUser(request, user);
         logger.info("로그인 성공: {}, 세션 ID: {}", user.getEmail(), SessionUtil.getSessionId(request));
 
         // 클라이언트에 반환할 사용자 정보에서 민감한 정보 제거

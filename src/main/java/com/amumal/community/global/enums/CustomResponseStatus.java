@@ -1,23 +1,38 @@
 package com.amumal.community.global.enums;
 
+import org.springframework.http.HttpStatus;
+
 public enum CustomResponseStatus {
-    UNAUTHORIZED_REQUEST(401, "Unauthorized request"),
-    NOT_FOUND(404, "Resource not found"),
-    INTERNAL_SERVER_ERROR(500, "Internal server error");
+    // 성공 코드
+    SUCCESS("success", HttpStatus.OK),
 
-    private final int code;
-    private final String message;
+    // 인증 관련 오류
+    UNAUTHORIZED("unauthorized", HttpStatus.UNAUTHORIZED),
+    UNAUTHORIZED_REQUEST("unauthorized_request", HttpStatus.FORBIDDEN),
 
-    CustomResponseStatus(int code, String message) {
+    // 리소스 오류
+    NOT_FOUND("not_found", HttpStatus.NOT_FOUND),
+
+    // 요청 오류
+    BAD_REQUEST("bad_request", HttpStatus.BAD_REQUEST),
+    VALIDATION_FAILED("validation_failed", HttpStatus.BAD_REQUEST),
+
+    // 서버 오류
+    SERVER_ERROR("server_error", HttpStatus.INTERNAL_SERVER_ERROR);
+
+    private final String code;
+    private final HttpStatus httpStatus;
+
+    CustomResponseStatus(String code, HttpStatus httpStatus) {
         this.code = code;
-        this.message = message;
+        this.httpStatus = httpStatus;
     }
 
-    public int getCode() {
+    public String getCode() {
         return code;
     }
 
-    public String getMessage() {
-        return message;
+    public HttpStatus getHttpStatus() {
+        return httpStatus;
     }
 }

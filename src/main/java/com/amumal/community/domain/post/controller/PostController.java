@@ -7,7 +7,10 @@ import com.amumal.community.domain.post.service.post.PostCommandService;
 import com.amumal.community.domain.post.service.post.PostQueryService;
 import com.amumal.community.domain.user.entity.User;
 import com.amumal.community.domain.user.service.UserQueryService;
+import com.amumal.community.domain.user.service.UserService;
 import com.amumal.community.global.dto.ApiResponse;
+import com.amumal.community.global.util.SessionUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +24,7 @@ public class PostController {
 
     private final PostQueryService postQueryService;
     private final PostCommandService postCommandService;
-    private final UserQueryService userQueryService;
+    private final UserService userService;  // UserQueryService 대신 UserService 사용
 
     @GetMapping
     public ResponseEntity<ApiResponse<PostResponse>> getPosts(
@@ -35,10 +38,13 @@ public class PostController {
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostDetailResponse>> getPostDetail(
             @PathVariable Long postId,
-            @RequestParam(value = "email", required = false) String email,
+            HttpServletRequest request,
             @RequestParam(value = "incrementView", defaultValue = "true") Boolean incrementView) {
 
-        User currentUser = email != null ? userQueryService.getUserByEmail(email) : null;
+        // 세션 확인 없이 게시글 조회 가능 (선택적)
+        Long userId = SessionUtil.getLoggedInUserId(request);
+        User currentUser = userId != null ? userService.findById(userId) : null;
+
         PostDetailResponse response = postQueryService.getPostDetailInfoById(postId, incrementView);
         return ResponseEntity.ok(new ApiResponse<>("fetch_post_detail_success", response));
     }
@@ -46,8 +52,14 @@ public class PostController {
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> createPost(
             @Validated @RequestBody PostRequest request,
-            @RequestParam("email") String email) {
-        User currentUser = userQueryService.getUserByEmail(email);
+            HttpServletRequest httpRequest) {
+
+        User currentUser = SessionUtil.getCurrentUser(httpRequest, userService);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>("unauthorized", null));
+        }
+
         Long postId = postCommandService.createPost(request, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>("create_post_success", postId));
@@ -57,8 +69,14 @@ public class PostController {
     public ResponseEntity<ApiResponse<Void>> updatePost(
             @PathVariable Long postId,
             @Validated @RequestBody PostRequest request,
-            @RequestParam("email") String email) {
-        User currentUser = userQueryService.getUserByEmail(email);
+            HttpServletRequest httpRequest) {
+
+        User currentUser = SessionUtil.getCurrentUser(httpRequest, userService);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>("unauthorized", null));
+        }
+
         postCommandService.updatePost(postId, request, currentUser);
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .body(new ApiResponse<>("update_post_success", null));
@@ -67,8 +85,14 @@ public class PostController {
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> deletePost(
             @PathVariable Long postId,
-            @RequestParam("email") String email) {
-        User currentUser = userQueryService.getUserByEmail(email);
+            HttpServletRequest httpRequest) {
+
+        User currentUser = SessionUtil.getCurrentUser(httpRequest, userService);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>("unauthorized", null));
+        }
+
         postCommandService.deletePost(postId, currentUser);
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .body(new ApiResponse<>("delete_post_success", null));
