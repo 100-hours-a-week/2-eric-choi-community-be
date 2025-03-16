@@ -35,11 +35,11 @@ public class PostController {
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostDetailResponse>> getPostDetail(
             @PathVariable Long postId,
-            @RequestParam(value = "email", required = false) String email) {
-        // 이메일이 제공된 경우에만 사용자 정보 가져오기 (선택적)
-        User currentUser = email != null ? userQueryService.getUserByEmail(email) : null;
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "incrementView", defaultValue = "true") Boolean incrementView) {
 
-        PostDetailResponse response = postQueryService.getPostDetailInfoById(postId);
+        User currentUser = email != null ? userQueryService.getUserByEmail(email) : null;
+        PostDetailResponse response = postQueryService.getPostDetailInfoById(postId, incrementView);
         return ResponseEntity.ok(new ApiResponse<>("fetch_post_detail_success", response));
     }
 
