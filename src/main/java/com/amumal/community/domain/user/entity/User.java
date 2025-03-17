@@ -25,7 +25,7 @@ public class User implements Serializable { // Serializable 인터페이스 추�
     @Column(length = 255, nullable = false, unique = true)
     private String email;
 
-    @Column(length = 20, nullable = false)
+    @Column(length = 255, nullable = false)
     private String password;
 
     @Lob
