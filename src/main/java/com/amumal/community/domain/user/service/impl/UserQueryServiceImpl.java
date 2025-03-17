@@ -28,7 +28,6 @@ public class UserQueryServiceImpl implements UserQueryService {
                 user.getNickname(),
                 user.getProfileImage()
         );
-
     }
 
     @Override

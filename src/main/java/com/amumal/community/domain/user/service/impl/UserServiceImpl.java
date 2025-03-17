@@ -7,6 +7,7 @@ import com.amumal.community.domain.user.entity.User;
 import com.amumal.community.domain.user.repository.UserRepository;
 import com.amumal.community.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder; // PasswordEncoder 주입
 
     @Override
     public void updateProfile(UserUpdateRequest request) {
@@ -32,8 +34,9 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        // 암호화 없이 평문 저장
-        user.updatePassword(request.getPassword());
+        // 비밀번호 암호화 적용
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        user.updatePassword(encodedPassword);
     }
 
     @Override
