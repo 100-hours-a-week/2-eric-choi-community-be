@@ -35,35 +35,22 @@ public class Comment extends BaseEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    /**
-     * 댓글 수정 메서드.
-     * 수정 요청 DTO와 접근한 사용자(User)를 받아 작성자 검증 후 내용을 업데이트합니다.
-     *
-     * @param modifyRequest 수정 요청 DTO
-     * @param accessUser 접근한 사용자(User)
-     */
+    //댓글 수정 메서드.
+
     public void updateComment(CommentRequest modifyRequest, User accessUser) {
         validateSameUser(accessUser);
         this.content = modifyRequest.content();
     }
 
-    /**
-     * 댓글 삭제(논리 삭제) 메서드.
-     * 작성자 검증 후 BaseEntity의 delete() 메서드를 호출합니다.
-     *
-     * @param accessUser 접근한 사용자(User)
-     */
+    //댓글 삭제(논리 삭제) 메서드.
+
     public void safeDelete(User accessUser) {
         validateSameUser(accessUser);
         this.delete();
     }
 
-    /**
-     * 작성자 검증 메서드.
-     * 접근한 사용자의 ID와 댓글 작성자의 ID가 다르면 예외를 발생시킵니다.
-     *
-     * @param accessUser 접근한 사용자(User)
-     */
+    //작성자 검증 메서드.
+
     public void validateSameUser(User accessUser) {
         if (!Objects.equals(this.user.getId(), accessUser.getId())) {
             throw new CustomException(CustomResponseStatus.UNAUTHORIZED_REQUEST);

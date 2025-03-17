@@ -25,7 +25,6 @@ public class LikesServiceImpl implements LikesService {
     public void addLike(Long postId, LikeRequest request, User currentUser) {
         // 이미 좋아요를 눌렀는지 확인
         if (likesRepository.existsByPostIdAndUserId(postId, currentUser.getId())) {
-            // 예외를 발생시키는 대신 좋아요를 취소
             removeLike(postId, currentUser.getId(), currentUser);
             return;
         }

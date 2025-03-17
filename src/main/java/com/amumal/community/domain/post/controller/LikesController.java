@@ -3,7 +3,6 @@ package com.amumal.community.domain.post.controller;
 import com.amumal.community.domain.post.dto.request.LikeRequest;
 import com.amumal.community.domain.post.repository.likes.LikesRepository;
 import com.amumal.community.domain.post.service.likes.LikesService;
-import com.amumal.community.domain.user.service.UserQueryService;
 import com.amumal.community.domain.user.service.UserService;
 import com.amumal.community.global.dto.ApiResponse;
 import com.amumal.community.domain.user.entity.User;

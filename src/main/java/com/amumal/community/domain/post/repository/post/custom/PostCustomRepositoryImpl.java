@@ -2,7 +2,6 @@ package com.amumal.community.domain.post.repository.post.custom;
 
 import com.amumal.community.domain.post.dto.response.PostDetailResponse;
 import com.amumal.community.domain.post.dto.response.PostResponse.PostSimpleInfo;
-import com.amumal.community.domain.post.entity.Post;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;

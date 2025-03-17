@@ -42,8 +42,6 @@ public class PostQueryServiceImpl implements PostQueryService {
             post.incrementViewCount();
             postRepository.save(post);
 
-            // 또는 직접 update 쿼리를 실행하는 경우:
-            // postRepository.incrementViewCount(postId);
         }
 
         // 게시글 상세 정보 조회

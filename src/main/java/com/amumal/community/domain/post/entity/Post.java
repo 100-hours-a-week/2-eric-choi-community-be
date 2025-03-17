@@ -64,13 +64,8 @@ public class Post extends BaseEntity {
         this.viewCount++;
     }
 
-    /**
-     * 게시글 수정 메서드.
-     * 접근한 사용자가 작성자와 일치하는지 검증한 후 제목, 내용, 이미지 정보를 업데이트합니다.
-     *
-     * @param modifyRequest 수정 요청 DTO
-     * @param accessUser 접근한 사용자(User)
-     */
+    //게시글 수정 메서드.
+
     public void update(PostRequest modifyRequest, User accessUser) {
         validateSameUser(accessUser);
         this.title = modifyRequest.title();
@@ -78,23 +73,15 @@ public class Post extends BaseEntity {
         this.image = modifyRequest.image();
     }
 
-    /**
-     * 게시글 삭제(논리 삭제) 메서드.
-     * 접근한 사용자가 작성자와 일치하는지 검증한 후 논리 삭제 처리(BaseEntity.delete())를 수행합니다.
-     *
-     * @param accessUser 접근한 사용자(User)
-     */
+    //게시글 삭제(논리 삭제) 메서드.
+
     public void safeDelete(User accessUser) {
         validateSameUser(accessUser);
         this.delete();
     }
 
-    /**
-     * 작성자 검증 메서드.
-     * 접근한 사용자의 ID와 게시글 작성자의 ID가 다르면 예외를 발생시킵니다.
-     *
-     * @param accessUser 접근한 사용자(User)
-     */
+    //작성자 검증 메서드.
+
     public void validateSameUser(User accessUser) {
         if (!Objects.equals(this.user.getId(), accessUser.getId())) {
             throw new CustomException(CustomResponseStatus.UNAUTHORIZED_REQUEST);

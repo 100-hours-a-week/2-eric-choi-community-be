@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
-    // Post 조회를 위해 PostRepository 직접 주입 (CQRS의 조회 부분은 QueryService나 Repository에서 처리)
     private final PostRepository postRepository;
 
     @Override

@@ -24,7 +24,7 @@ public class PostController {
 
     private final PostQueryService postQueryService;
     private final PostCommandService postCommandService;
-    private final UserService userService;  // UserQueryService 대신 UserService 사용
+    private final UserService userService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<PostResponse>> getPosts(

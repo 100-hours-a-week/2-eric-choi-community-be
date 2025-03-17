@@ -13,6 +13,5 @@ public record PostRequest(
         @NotBlank(message = "Content cannot be blank")
         String content,
 
-        // 이미지 URL 또는 base64 인코딩 문자열 등 필요에 따라 활용
         String image
 ) {}
