@@ -13,9 +13,11 @@ import com.amumal.community.global.util.SessionUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/posts")
@@ -49,9 +51,10 @@ public class PostController {
         return ResponseEntity.ok(new ApiResponse<>("fetch_post_detail_success", response));
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> createPost(
-            @Validated @RequestBody PostRequest request,
+            @RequestPart("postInfo") @Validated PostRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image,
             HttpServletRequest httpRequest) {
 
         User currentUser = SessionUtil.getCurrentUser(httpRequest, userService);
@@ -60,15 +63,16 @@ public class PostController {
                     .body(new ApiResponse<>("unauthorized", null));
         }
 
-        Long postId = postCommandService.createPost(request, currentUser);
+        Long postId = postCommandService.createPost(request, image, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>("create_post_success", postId));
     }
 
-    @PatchMapping("/{postId}")
+    @PatchMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Void>> updatePost(
             @PathVariable Long postId,
-            @Validated @RequestBody PostRequest request,
+            @RequestPart("postInfo") @Validated PostRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image,
             HttpServletRequest httpRequest) {
 
         User currentUser = SessionUtil.getCurrentUser(httpRequest, userService);
@@ -77,7 +81,7 @@ public class PostController {
                     .body(new ApiResponse<>("unauthorized", null));
         }
 
-        postCommandService.updatePost(postId, request, currentUser);
+        postCommandService.updatePost(postId, request, image, currentUser);
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .body(new ApiResponse<>("update_post_success", null));
     }

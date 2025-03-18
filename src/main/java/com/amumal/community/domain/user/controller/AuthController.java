@@ -4,7 +4,7 @@ import com.amumal.community.domain.user.dto.request.LoginRequest;
 import com.amumal.community.domain.user.dto.request.SignupRequest;
 import com.amumal.community.domain.user.entity.User;
 import com.amumal.community.domain.user.service.AuthService;
-import com.amumal.community.domain.user.service.UserService;  // 추가: 사용자 조회를 위한 서비스
+import com.amumal.community.domain.user.service.UserService;
 import com.amumal.community.global.dto.ApiResponse;
 import com.amumal.community.global.util.SessionUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,9 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,11 +24,14 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
-    private final UserService userService;  // 추가: 사용자 조회를 위한 서비스
+    private final UserService userService;
 
-    @PostMapping("/new")
-    public ResponseEntity<ApiResponse<Long>> register(@Validated @RequestBody SignupRequest signupRequest) {
-        Long userId = authService.signup(signupRequest);
+    @PostMapping(value = "/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> register(
+            @RequestPart(value = "userInfo") @Validated SignupRequest signupRequest,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+
+        Long userId = authService.signup(signupRequest, profileImage);
         ApiResponse<Long> response = new ApiResponse<>("register_success", userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
