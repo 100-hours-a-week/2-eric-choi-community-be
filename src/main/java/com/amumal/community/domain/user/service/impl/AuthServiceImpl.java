@@ -2,10 +2,12 @@ package com.amumal.community.domain.user.service.impl;
 
 import com.amumal.community.domain.user.dto.request.LoginRequest;
 import com.amumal.community.domain.user.dto.request.SignupRequest;
+import com.amumal.community.domain.user.dto.response.AuthResponse;
 import com.amumal.community.domain.user.entity.User;
 import com.amumal.community.domain.user.repository.UserRepository;
 import com.amumal.community.domain.user.service.AuthService;
 import com.amumal.community.global.s3.service.S3Service;
+import com.amumal.community.global.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final S3Service s3Service;
+    private final JwtUtil jwtUtil;
 
     @Override
     public Long signup(SignupRequest request, MultipartFile profileImage) {
@@ -47,9 +50,9 @@ public class AuthServiceImpl implements AuthService {
 
         User user = User.builder()
                 .email(request.getEmail())
-                .password(encodedPassword) // 암호화된 비밀번호 저장
+                .password(encodedPassword)
                 .nickname(request.getNickname())
-                .profileImage(profileImageUrl) // request.getProfileImage() 대신 S3에 업로드된 URL 사용
+                .profileImage(profileImageUrl)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -57,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public User login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호 오류"));
 
@@ -65,6 +68,44 @@ public class AuthServiceImpl implements AuthService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("이메일 또는 비밀번호 오류");
         }
-        return user;
+
+        // JWT 토큰 생성
+        String accessToken = jwtUtil.generateToken(user.getId(), user.getEmail());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
+
+        return AuthResponse.builder()
+                .userId(user.getId())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .profileImage(user.getProfileImage())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+    @Override
+    public AuthResponse refreshToken(String refreshToken) {
+        // 리프레시 토큰 유효성 검증
+        String email = jwtUtil.extractUsername(refreshToken);
+        Long userId = jwtUtil.extractUserId(refreshToken);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 토큰입니다."));
+
+        if (!jwtUtil.validateToken(refreshToken, email)) {
+            throw new IllegalArgumentException("만료되거나 유효하지 않은 리프레시 토큰입니다.");
+        }
+
+        // 새로운 액세스 토큰 발급
+        String newAccessToken = jwtUtil.generateToken(userId, email);
+
+        return AuthResponse.builder()
+                .userId(user.getId())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .profileImage(user.getProfileImage())
+                .accessToken(newAccessToken)
+                .refreshToken(refreshToken) // 동일한 리프레시 토큰 재사용
+                .build();
     }
 }

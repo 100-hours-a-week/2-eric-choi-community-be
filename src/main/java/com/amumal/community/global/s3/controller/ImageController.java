@@ -2,11 +2,10 @@ package com.amumal.community.global.s3.controller;
 
 import com.amumal.community.global.dto.ApiResponse;
 import com.amumal.community.global.s3.service.S3Service;
-import com.amumal.community.global.util.SessionUtil;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,13 +24,7 @@ public class ImageController {
     @PostMapping("/upload")
     public ResponseEntity<ApiResponse<String>> uploadImage(
             @RequestParam("image") MultipartFile image,
-            HttpServletRequest request) {
-
-        Long userId = SessionUtil.getLoggedInUserId(request);
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>("unauthorized", null));
-        }
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         try {
             if (image.isEmpty()) {
@@ -56,7 +49,7 @@ public class ImageController {
 
             return ResponseEntity.ok(new ApiResponse<>("upload_success", imageUrl));
         } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.internalServerError()
                     .body(new ApiResponse<>("upload_failed", null));
         }
     }

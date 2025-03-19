@@ -2,12 +2,11 @@ package com.amumal.community.domain.user.service;
 
 import com.amumal.community.domain.user.dto.request.LoginRequest;
 import com.amumal.community.domain.user.dto.request.SignupRequest;
-import com.amumal.community.domain.user.entity.User;
+import com.amumal.community.domain.user.dto.response.AuthResponse;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface AuthService {
-
     Long signup(SignupRequest request, MultipartFile profilImage);
-
-    User login(LoginRequest request);
+    AuthResponse login(LoginRequest request);
+    AuthResponse refreshToken(String refreshToken);
 }

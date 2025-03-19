@@ -49,8 +49,12 @@ dependencies {
 
 	// AWS SDK v2 S3 추가
 	implementation 'software.amazon.awssdk:s3:2.25.2'
-
 	implementation 'me.paulschwarz:spring-dotenv:3.0.0'
+
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
 }
 
 tasks.named('test') {

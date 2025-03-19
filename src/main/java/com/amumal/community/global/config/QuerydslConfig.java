@@ -1,4 +1,4 @@
-package com.amumal.community.config;
+package com.amumal.community.global.config;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
