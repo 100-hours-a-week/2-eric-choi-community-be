@@ -3,7 +3,7 @@ package com.amumal.community.domain.user.controller;
 import com.amumal.community.domain.user.dto.request.PasswordUpdateRequest;
 import com.amumal.community.domain.user.dto.request.UserUpdateRequest;
 import com.amumal.community.domain.user.dto.response.UserInfoResponse;
-import com.amumal.community.domain.user.security.JwtUserDetails;
+import com.amumal.community.global.config.security.JwtUserDetails;
 import com.amumal.community.domain.user.service.UserService;
 import com.amumal.community.global.dto.ApiResponse;
 import com.amumal.community.global.exception.CustomException;

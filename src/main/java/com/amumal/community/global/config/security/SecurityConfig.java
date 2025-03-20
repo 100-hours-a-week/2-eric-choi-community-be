@@ -1,6 +1,5 @@
-package com.amumal.community.global.config;
+package com.amumal.community.global.config.security;
 
-import com.amumal.community.domain.user.security.CustomUserDetailsService;
 import com.amumal.community.global.config.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

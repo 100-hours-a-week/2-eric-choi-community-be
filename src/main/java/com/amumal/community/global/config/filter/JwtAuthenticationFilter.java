@@ -1,6 +1,6 @@
 package com.amumal.community.global.config.filter;
 
-import com.amumal.community.domain.user.security.CustomUserDetailsService;
+import com.amumal.community.global.config.security.CustomUserDetailsService;
 import com.amumal.community.global.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

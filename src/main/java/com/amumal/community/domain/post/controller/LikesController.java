@@ -4,7 +4,7 @@ import com.amumal.community.domain.post.dto.request.LikeRequest;
 import com.amumal.community.domain.post.repository.likes.LikesRepository;
 import com.amumal.community.domain.post.service.likes.LikesService;
 import com.amumal.community.domain.user.entity.User;
-import com.amumal.community.domain.user.security.JwtUserDetails;
+import com.amumal.community.global.config.security.JwtUserDetails;
 import com.amumal.community.domain.user.service.UserService;
 import com.amumal.community.global.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;

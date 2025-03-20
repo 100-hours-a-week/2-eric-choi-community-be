@@ -13,4 +13,8 @@ public class CustomException extends RuntimeException {
     public CustomResponseStatus getStatus() {
         return status;
     }
+
+    public CustomResponseStatus getErrorStatus() {
+        return status;
+    }
 }

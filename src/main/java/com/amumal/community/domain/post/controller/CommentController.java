@@ -3,7 +3,7 @@ package com.amumal.community.domain.post.controller;
 import com.amumal.community.domain.post.dto.request.CommentRequest;
 import com.amumal.community.domain.post.service.comment.CommentService;
 import com.amumal.community.domain.user.entity.User;
-import com.amumal.community.domain.user.security.JwtUserDetails;
+import com.amumal.community.global.config.security.JwtUserDetails;
 import com.amumal.community.domain.user.service.UserService;
 import com.amumal.community.global.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;

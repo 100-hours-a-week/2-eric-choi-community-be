@@ -3,7 +3,7 @@ package com.amumal.community.domain.user.controller;
 import com.amumal.community.domain.user.dto.request.LoginRequest;
 import com.amumal.community.domain.user.dto.response.AuthResponse;
 import com.amumal.community.domain.user.entity.User;
-import com.amumal.community.domain.user.security.JwtUserDetails;
+import com.amumal.community.global.config.security.JwtUserDetails;
 import com.amumal.community.domain.user.service.AuthService;
 import com.amumal.community.domain.user.service.UserService;
 import com.amumal.community.global.dto.ApiResponse;

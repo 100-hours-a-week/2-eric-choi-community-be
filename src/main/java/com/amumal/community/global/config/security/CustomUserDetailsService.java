@@ -1,4 +1,4 @@
-package com.amumal.community.domain.user.security;
+package com.amumal.community.global.config.security;
 
 import com.amumal.community.domain.user.entity.User;
 import com.amumal.community.domain.user.repository.UserRepository;

@@ -6,7 +6,7 @@ import com.amumal.community.domain.post.dto.response.PostResponse;
 import com.amumal.community.domain.post.service.post.PostCommandService;
 import com.amumal.community.domain.post.service.post.PostQueryService;
 import com.amumal.community.domain.user.entity.User;
-import com.amumal.community.domain.user.security.JwtUserDetails;
+import com.amumal.community.global.config.security.JwtUserDetails;
 import com.amumal.community.domain.user.service.UserService;
 import com.amumal.community.global.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
