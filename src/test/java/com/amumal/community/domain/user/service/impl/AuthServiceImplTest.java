@@ -68,7 +68,7 @@ class AuthServiceImplTest {
 
 
     @Test
-    @DisplayName("회원가입 성공 - 프로필 이미지가 있는 경우")
+    @DisplayName("프로필 이미지가 있는 경우 회원가입 성공한다")
     void signup_Success_WithImage() throws IOException {
         // Given
         when(userRepository.existsByEmail(email)).thenReturn(false);
@@ -99,8 +99,8 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("회원가입 성공 - 프로필 이미지가 없는 경우")
-    void signup_Success_WithoutImage() throws IOException {
+    @DisplayName("프로필 이미지가 없는 경우 회원가입 실패한다")
+    void signup_Fail_WithoutImage() throws IOException {
         // Given: 프로필 이미지가 비어있는 경우, 즉 null 혹은 isEmpty()가 true인 경우
         MultipartFile emptyImage = new MockMultipartFile("profileImage", "empty.png", "image/png", new byte[0]);
         when(userRepository.existsByEmail(email)).thenReturn(false);
@@ -129,7 +129,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("회원가입 실패 - 이미 존재하는 이메일")
+    @DisplayName("이미 존재하는 이메일로 회원가입 실패한다")
     void signup_Failure_EmailExists() {
         // Given
         when(userRepository.existsByEmail(email)).thenReturn(true);
@@ -144,7 +144,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("회원가입 실패 - 이미 존재하는 닉네임")
+    @DisplayName("이미 존재하는 닉네임으로 회원가입 실패한다")
     void signup_Failure_NicknameExists() {
         // Given
         when(userRepository.existsByEmail(email)).thenReturn(false);
@@ -160,7 +160,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("회원가입 실패 - 이미지 업로드 중 IOException 발생")
+    @DisplayName("이미지 업로드 중 IO exception으로 회원가입 실패한다")
     void signup_Failure_ImageUploadIOException() throws IOException {
         // Given
         when(userRepository.existsByEmail(email)).thenReturn(false);
@@ -179,7 +179,7 @@ class AuthServiceImplTest {
 
 
     @Test
-    @DisplayName("로그인 성공 케이스")
+    @DisplayName("로그인 성공한다")
     void testLogin_Success() {
         // Given
         User user = User.builder()
@@ -210,7 +210,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("로그인 실패 - 이메일 값이 없을 경우")
+    @DisplayName("이메일 값이 비었을 경우 로그인 싪패한다")
     void login_Fail_NoEmail() {
         // Given: 이메일이 null인 로그인 요청
         LoginRequest invalidLoginRequest = new LoginRequest(null, rawPassword);
@@ -229,7 +229,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("로그인 실패 - 비밀번호 값이 없을 경우")
+    @DisplayName("비밀번호 값이 비었을 경우 로그인 실패한다")
     void login_Fail_NoPassword() {
         // Given: 비밀번호가 null인 로그인 요청
         LoginRequest invalidLoginRequest = new LoginRequest(email, null);
@@ -251,7 +251,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("로그인 실패 - 잘못된 비밀번호")
+    @DisplayName("잘못된 비밀번호로 로그인 실패한다")
     void login_Fail_WrongPassword() {
         // Given
         LoginRequest wrongPasswordRequest = new LoginRequest(email, "wrongPassword");
@@ -274,7 +274,7 @@ class AuthServiceImplTest {
 
 
     @Test
-    @DisplayName("리프레시 토큰 갱신 성공 케이스")
+    @DisplayName("리프레시 토큰 갱신 성공한다")
     void testRefreshToken_Success() {
         // Given: refreshToken으로부터 이메일과 userId 추출
         when(jwtUtil.extractUsername(refreshToken)).thenReturn(email);
@@ -306,7 +306,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("리프레시 토큰 갱신 실패 - 토큰 유효성 실패")
+    @DisplayName("토큰 유효성 실패로 리프레시 토큰 갱신 실패한다")
     void testRefreshToken_Failure_InvalidToken() {
         // Given
         when(jwtUtil.extractUsername(refreshToken)).thenReturn(email);

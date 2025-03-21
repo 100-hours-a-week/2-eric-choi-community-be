@@ -1,6 +1,7 @@
 package com.amumal.community.domain.user.controller;
 
 import com.amumal.community.domain.user.dto.request.LoginRequest;
+import com.amumal.community.domain.user.dto.request.SignupRequest;
 import com.amumal.community.domain.user.dto.response.AuthResponse;
 import com.amumal.community.domain.user.entity.User;
 import com.amumal.community.global.config.security.JwtUserDetails;
@@ -12,14 +13,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.time.Duration;
 
 @RestController
@@ -52,6 +53,16 @@ public class AuthController {
         authResponse.setRefreshToken(null);
 
         return ResponseEntity.ok(new ApiResponse<>("login_success", authResponse));
+    }
+
+    @PostMapping(value = "/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> register(
+            @RequestPart(value = "userInfo") @Validated SignupRequest signupRequest,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+
+        Long userId = authService.signup(signupRequest, profileImage);
+        ApiResponse<Long> response = new ApiResponse<>("register_success", userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/refresh")

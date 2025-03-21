@@ -41,7 +41,7 @@ class UserQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("유저 정보 조회 성공: 존재하는 ID")
+    @DisplayName("유저 정보 조회 성공한다")
     void getUserInfoById_Success() {
         // Given
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
@@ -59,7 +59,7 @@ class UserQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("유저 정보 조회 실패: 존재하지 않는 ID")
+    @DisplayName("존재하지 않는 ID로 유저 정보 조회 실패한다")
     void getUserInfoById_Failure() {
         // Given: 조회 시 Optional.empty() 반환
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
@@ -73,7 +73,7 @@ class UserQueryServiceImplTest {
 
 
     @Test
-    @DisplayName("이메일 중복 확인: 중복된 경우")
+    @DisplayName("이메일 중복된 경우")
     void isEmailDuplicate_True() {
         // Given: 이메일이 중복된 경우 true 반환
         when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
@@ -87,7 +87,7 @@ class UserQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("이메일 중복 확인: 중복되지 않은 경우")
+    @DisplayName("이메일 중복되지 않은 경우")
     void isEmailDuplicate_False() {
         // Given: 중복되지 않은 경우 false 반환
         when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
@@ -102,7 +102,7 @@ class UserQueryServiceImplTest {
 
 
     @Test
-    @DisplayName("닉네임 중복 확인: 중복된 경우")
+    @DisplayName("닉네임 중복된 경우")
     void isNicknameDuplicate_True() {
         // Given
         when(userRepository.existsByNickname("tester")).thenReturn(true);
@@ -116,7 +116,7 @@ class UserQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("닉네임 중복 확인: 중복되지 않은 경우")
+    @DisplayName("닉네임 중복되지 않은 경우")
     void isNicknameDuplicate_False() {
         // Given
         when(userRepository.existsByNickname("tester")).thenReturn(false);
@@ -131,7 +131,7 @@ class UserQueryServiceImplTest {
 
 
     @Test
-    @DisplayName("이메일로 유저 조회 성공")
+    @DisplayName("이메일로 유저 조회 성공한다")
     void getUserByEmail_Success() {
         // Given
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
@@ -146,7 +146,7 @@ class UserQueryServiceImplTest {
     }
 
     @Test
-    @DisplayName("이메일로 유저 조회 실패")
+    @DisplayName("이메일로 유저 조회 실패한다")
     void getUserByEmail_Failure() {
         // Given: 해당 이메일이 존재하지 않음
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.empty());
