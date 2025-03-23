@@ -1,6 +1,8 @@
 package com.amumal.community.domain.user.service.impl;
 
+import com.amumal.community.domain.user.dto.request.PasswordUpdateRequest;
 import com.amumal.community.domain.user.dto.request.UserUpdateRequest;
+import com.amumal.community.domain.user.dto.response.UserInfoResponse;
 import com.amumal.community.domain.user.entity.User;
 import com.amumal.community.domain.user.repository.UserRepository;
 import com.amumal.community.global.s3.service.S3Service;
@@ -122,27 +124,76 @@ class UserServiceImplTest {
         verify(s3Service, never()).deleteImage(anyString());
         verify(s3Service, never()).uploadImage(any());
     }
-    @Test
-    void updatePassword() {
-    }
 
     @Test
-    void getUserInfo() {
+    @DisplayName("비밀번호 변경을 성공한다")
+    void updatePassword_Success() {
+        // Given
+        PasswordUpdateRequest request = new PasswordUpdateRequest();
+        request.setUserId(testUser.getId());
+        request.setPassword("newPassword123");
+        request.setConfirmPassword("newPassword123");
+
+        when(userRepository.findById(testUser.getId())).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.encode("newPassword123")).thenReturn("encodedNewPassword");
+
+        // When
+        userService.updatePassword(request);
+
+        // Then
+        assertEquals("encodedNewPassword", testUser.getPassword());
+        verify(userRepository).findById(testUser.getId());
+        verify(passwordEncoder).encode("newPassword123");
     }
 
     @Test
-    void deleteUser() {
+    @DisplayName("유저 정보 조회를 성공한다")
+    void getUserInfo_Success() {
+        // Given: testUser 객체가 존재한다고 가정하고, userRepository.findById()가 해당 객체를 반환하도록 설정
+        when(userRepository.findById(testUser.getId())).thenReturn(Optional.of(testUser));
+
+        // When: getUserInfo() 호출
+        UserInfoResponse response = userService.getUserInfo(testUser.getId());
+
+        // Then: 반환된 응답의 필드들이 testUser와 일치하는지 검증
+        assertNotNull(response);
+        assertEquals(testUser.getId(), response.getId());
+        assertEquals(testUser.getEmail(), response.getEmail());
+        assertEquals(testUser.getNickname(), response.getNickname());
+        assertEquals(testUser.getProfileImage(), response.getProfileImage());
+        verify(userRepository).findById(testUser.getId());
     }
+
 
     @Test
-    void findById() {
+    @DisplayName("deleteUser: 사용자 삭제를 성공적으로 수행한다")
+    void deleteUser_Success() {
+        // Given: testUser가 존재하는 경우
+        when(userRepository.findById(testUser.getId())).thenReturn(Optional.of(testUser));
+
+        // When: deleteUser 호출
+        userService.deleteUser(testUser.getId());
+
+        // Then: userRepository.delete()가 호출되었음을 검증
+        verify(userRepository).delete(testUser);
+        verify(userRepository).findById(testUser.getId());
     }
 
-    public User getTestUser() {
-        return testUser;
+
+    @Test
+    @DisplayName("findById: 사용자 조회를 성공적으로 수행한다")
+    void findById_Success() {
+        // Given: testUser가 존재하는 경우
+        when(userRepository.findById(testUser.getId())).thenReturn(Optional.of(testUser));
+
+        // When: findById 호출
+        User foundUser = userService.findById(testUser.getId());
+
+        // Then: 반환된 사용자와 testUser가 일치하는지 검증
+        assertNotNull(foundUser);
+        assertEquals(testUser, foundUser);
+        verify(userRepository).findById(testUser.getId());
     }
 
-    public void setTestUser(User testUser) {
-        this.testUser = testUser;
-    }
+
 }
