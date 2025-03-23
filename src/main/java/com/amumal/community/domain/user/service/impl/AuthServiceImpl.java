@@ -3,6 +3,7 @@ package com.amumal.community.domain.user.service.impl;
 import com.amumal.community.domain.user.dto.request.LoginRequest;
 import com.amumal.community.domain.user.dto.request.SignupRequest;
 import com.amumal.community.domain.user.dto.response.AuthResponse;
+import com.amumal.community.domain.user.dto.response.UserInfoResponse;
 import com.amumal.community.domain.user.entity.User;
 import com.amumal.community.domain.user.repository.UserRepository;
 import com.amumal.community.domain.user.service.AuthService;
@@ -106,6 +107,20 @@ public class AuthServiceImpl implements AuthService {
                 .profileImage(user.getProfileImage())
                 .accessToken(newAccessToken)
                 .refreshToken(refreshToken) // 동일한 리프레시 토큰 재사용
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserInfoResponse convertToUserResponse(User user) {
+        return UserInfoResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .profileImage(user.getProfileImage())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .deletedAt(user.getDeletedAt())
                 .build();
     }
 }

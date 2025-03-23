@@ -22,12 +22,16 @@ public class UserQueryServiceImpl implements UserQueryService {
     public UserInfoResponse getUserInfoById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new CustomException(CustomResponseStatus.NOT_FOUND));
-        return new UserInfoResponse(
-                user.getId(),
-                user.getEmail(),
-                user.getNickname(),
-                user.getProfileImage()
-        );
+
+        return UserInfoResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .profileImage(user.getProfileImage())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .deletedAt(user.getDeletedAt())
+                .build();
     }
 
     @Override

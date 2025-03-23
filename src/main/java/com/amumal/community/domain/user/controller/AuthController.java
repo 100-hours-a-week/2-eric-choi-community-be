@@ -3,6 +3,7 @@ package com.amumal.community.domain.user.controller;
 import com.amumal.community.domain.user.dto.request.LoginRequest;
 import com.amumal.community.domain.user.dto.request.SignupRequest;
 import com.amumal.community.domain.user.dto.response.AuthResponse;
+import com.amumal.community.domain.user.dto.response.UserInfoResponse;
 import com.amumal.community.domain.user.entity.User;
 import com.amumal.community.global.config.security.JwtUserDetails;
 import com.amumal.community.domain.user.service.AuthService;
@@ -119,7 +120,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<User>> getCurrentUser(
+    public ResponseEntity<ApiResponse<UserInfoResponse>> getCurrentUser(
             @AuthenticationPrincipal JwtUserDetails userDetails) {
 
         if (userDetails == null) {
@@ -132,10 +133,10 @@ public class AuthController {
         User user = userService.findById(userDetails.getId());
         logger.info("현재 로그인된 사용자 정보 조회: {}", user.getEmail());
 
-        // 클라이언트에 반환할 사용자 정보에서 민감한 정보 제거
-        User userResponse = sanitizeUserForResponse(user);
+        // AuthService를 통해 User를 DTO로 변환
+        UserInfoResponse userResponse = authService.convertToUserResponse(user);
 
-        ApiResponse<User> response = new ApiResponse<>("success", userResponse);
+        ApiResponse<UserInfoResponse> response = new ApiResponse<>("success", userResponse);
         return ResponseEntity.ok(response);
     }
 
@@ -150,22 +151,5 @@ public class AuthController {
             }
         }
         return null;
-    }
-
-    /**
-     * 클라이언트에 전송하기 전에 사용자 객체에서 민감한 정보를 제거하는 메서드
-     */
-    private User sanitizeUserForResponse(User user) {
-        // Builder 패턴을 사용하여 비밀번호를 제외한 새 User 객체 생성
-        return User.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .nickname(user.getNickname())
-                .profileImage(user.getProfileImage())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .deletedAt(user.getDeletedAt())
-                // password는 의도적으로 제외
-                .build();
     }
 }

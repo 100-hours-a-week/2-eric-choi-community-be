@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +52,9 @@ public class PostCommandServiceImpl implements PostCommandService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(CustomResponseStatus.NOT_FOUND));
 
+        // 사용자 권한 검증
+        validatePostOwnership(post, currentUser);
+
         // 이미지 처리
         String imageUrl = post.getImage(); // 기존 이미지 URL
 
@@ -69,14 +73,8 @@ public class PostCommandServiceImpl implements PostCommandService {
             }
         }
 
-        // PostRequest의 원래 구조를 유지하면서 새로운 이미지 URL을 가진 객체 생성
-        PostRequest updatedRequest = PostRequest.builder()
-                .title(request.title())
-                .content(request.content())
-                .image(imageUrl)
-                .build();
-
-        post.update(updatedRequest, currentUser);
+        // 엔티티의 메서드를 통해 내용 업데이트
+        post.updateContent(request.title(), request.content(), imageUrl);
     }
 
     @Override
@@ -84,12 +82,23 @@ public class PostCommandServiceImpl implements PostCommandService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(CustomResponseStatus.NOT_FOUND));
 
+        // 사용자 권한 검증
+        validatePostOwnership(post, currentUser);
+
         // 게시글에 연결된 이미지가 있으면 S3에서 삭제
         String imageUrl = post.getImage();
         if (imageUrl != null && s3Service.isValidS3Url(imageUrl)) {
             s3Service.deleteImage(imageUrl);
         }
 
-        post.safeDelete(currentUser);
+        // 게시글 논리적 삭제
+        post.delete(); // BaseEntity의 delete() 메서드 사용
+    }
+
+    // 게시글 소유권 검증 메서드
+    private void validatePostOwnership(Post post, User currentUser) {
+        if (!Objects.equals(post.getUser().getId(), currentUser.getId())) {
+            throw new CustomException(CustomResponseStatus.UNAUTHORIZED_REQUEST);
+        }
     }
 }
