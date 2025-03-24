@@ -67,7 +67,7 @@ class UserQueryServiceImplTest {
         // When & Then: CustomException 발생 확인
         CustomException exception = assertThrows(CustomException.class,
                 () -> userQueryService.getUserInfoById(1L));
-        assertEquals(CustomResponseStatus.NOT_FOUND, exception.getErrorStatus());
+        assertEquals(CustomResponseStatus.NOT_FOUND, exception.getStatus());
         verify(userRepository).findById(1L);
     }
 
@@ -154,7 +154,7 @@ class UserQueryServiceImplTest {
         // When & Then: CustomException 발생 확인
         CustomException exception = assertThrows(CustomException.class,
                 () -> userQueryService.getUserByEmail("test@example.com"));
-        assertEquals(CustomResponseStatus.NOT_FOUND, exception.getErrorStatus());
+        assertEquals(CustomResponseStatus.NOT_FOUND, exception.getStatus());
         verify(userRepository).findByEmail("test@example.com");
     }
 }
