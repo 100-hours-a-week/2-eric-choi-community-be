@@ -1,16 +1,13 @@
 package com.amumal.community.domain.user.controller;
 
+import com.amumal.community.domain.TestSecurityConfig;
 import com.amumal.community.domain.user.dto.request.PasswordUpdateRequest;
 import com.amumal.community.domain.user.dto.request.UserUpdateRequest;
 import com.amumal.community.domain.user.dto.response.UserInfoResponse;
-import com.amumal.community.domain.user.entity.User;
 import com.amumal.community.domain.user.service.UserService;
 import com.amumal.community.global.config.security.JwtUserDetails;
-import com.amumal.community.global.enums.CustomResponseStatus;
-import com.amumal.community.global.exception.CustomException;
 import com.amumal.community.global.exception.GlobalExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -19,28 +16,23 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import static org.hamcrest.Matchers.containsString;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = UserController.class)
 @Import({TestSecurityConfig.class, GlobalExceptionHandler.class, UserControllerTest.MockConfig.class})
 @ContextConfiguration(classes = {UserController.class, TestSecurityConfig.class, GlobalExceptionHandler.class, UserControllerTest.MockConfig.class})
-
 class UserControllerTest {
 
     @Autowired
@@ -64,7 +56,7 @@ class UserControllerTest {
         when(userService.getUserInfo(userId)).thenReturn(userInfo);
 
         mockMvc.perform(get("/users/{id}", userId)
-                    .with(csrf()))
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("fetch_user_success"))
                 .andExpect(jsonPath("$.data.email").value("user@example.com"))
@@ -106,7 +98,10 @@ class UserControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.multipart("/users/{id}", userId)
                         .file(userInfoPart)
                         .file(filePart)
-                        .with(request -> { request.setMethod("PATCH"); return request; })
+                        .with(request -> {
+                            request.setMethod("PATCH");
+                            return request;
+                        })
                         .with(csrf())
                         .with(user(dummyUser)))
                 .andExpect(status().isNoContent())
@@ -132,7 +127,10 @@ class UserControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.multipart("/users/{id}", userId)
                         .file(userInfoPart)
                         .file(filePart)
-                        .with(request -> {request.setMethod("PATCH"); return request;})
+                        .with(request -> {
+                            request.setMethod("PATCH");
+                            return request;
+                        })
                         .with(csrf())
                         .with(user(dummyUser)))
                 .andExpect(status().isForbidden())
@@ -160,7 +158,10 @@ class UserControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.multipart("/users/{id}", userId)
                         .file(userInfoPart)
                         .file(filePart)
-                        .with(request -> {request.setMethod("PATCH"); return request;})
+                        .with(request -> {
+                            request.setMethod("PATCH");
+                            return request;
+                        })
                         .with(csrf())
                         .with(user(dummyUser)))
                 .andExpect(status().isInternalServerError())

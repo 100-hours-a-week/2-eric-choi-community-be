@@ -1,11 +1,13 @@
 package com.amumal.community.domain.user.controller;
 
+import com.amumal.community.domain.TestSecurityConfig;
 import com.amumal.community.domain.user.dto.request.LoginRequest;
 import com.amumal.community.domain.user.dto.request.SignupRequest;
 import com.amumal.community.domain.user.dto.response.AuthResponse;
 import com.amumal.community.domain.user.dto.response.UserInfoResponse;
 import com.amumal.community.domain.user.entity.User;
 import com.amumal.community.global.config.security.JwtUserDetails;
+import com.amumal.community.global.enums.CustomResponseStatus;
 import com.amumal.community.global.exception.CustomException;
 import com.amumal.community.global.exception.GlobalExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,8 +26,6 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import com.amumal.community.global.enums.CustomResponseStatus;
-
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,8 +39,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = AuthController.class)
 @Import({TestSecurityConfig.class, AuthControllerTest.MockConfig.class, GlobalExceptionHandler.class})
 @ContextConfiguration(classes = {AuthController.class, TestSecurityConfig.class, AuthControllerTest.MockConfig.class, GlobalExceptionHandler.class})
-
-
 class AuthControllerTest {
 
     @Autowired
