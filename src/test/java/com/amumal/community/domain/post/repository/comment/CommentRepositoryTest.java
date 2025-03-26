@@ -11,7 +11,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 class CommentRepositoryTest {
@@ -26,7 +26,7 @@ class CommentRepositoryTest {
     @DisplayName("댓글 저장 및 조회 테스트")
     void saveAndFindById() {
         // Given
-        // 필요한 엔티티(User, Post)를 미리 저장합니다.
+        // 필요한 엔티티(User, Post)를 미리 저장
         User user = User.builder()
                 .nickname("TestUser")
                 .email("test@example.com")
@@ -50,7 +50,7 @@ class CommentRepositoryTest {
                 .build();
 
         Comment savedComment = commentRepository.save(comment);
-        // DB에 반영하고 영속성 컨텍스트를 초기화하여 실제 DB에서 조회하도록 합니다.
+        // DB에 반영하고 영속성 컨텍스트를 초기화하여 실제 DB에서 조회
         entityManager.flush();
         entityManager.clear();
 

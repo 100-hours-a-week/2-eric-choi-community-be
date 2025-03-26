@@ -16,7 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserQueryServiceImplTest {
@@ -31,7 +32,7 @@ class UserQueryServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        // 테스트용 User 엔티티 생성 (빌더 패턴에 따라 수정)
+        // 테스트용 User 엔티티 생성
         testUser = User.builder()
                 .id(1L)
                 .email("test@example.com")
