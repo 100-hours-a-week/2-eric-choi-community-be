@@ -9,6 +9,7 @@ import com.amumal.community.domain.user.service.UserService;
 import com.amumal.community.global.config.security.JwtUserDetails;
 import com.amumal.community.global.exception.GlobalExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -20,6 +21,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -36,51 +38,79 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ContextConfiguration(classes = {LikesController.class, TestSecurityConfig.class, LikesControllerTest.MockConfig.class, GlobalExceptionHandler.class})
 public class LikesControllerTest {
 
+    // 테스트 상수
+    private static final Long POST_ID = 1L;
+    private static final Long USER_ID = 1L;
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
-
     @Autowired
     private LikesService likesService;
-
     @Autowired
     private UserService userService;
-
     @Autowired
     private LikesRepository likesRepository;
+    // 테스트 공통 변수
+    private User testUser;
+    private JwtUserDetails jwtUserDetails;
+    private LikeRequest likeRequest;
+    private String requestJson;
 
-    @Test
-    @DisplayName("POST /posts/{postId}/likes - 좋아요 추가 성공")
-    public void addLike_success() throws Exception {
-        Long postId = 1L;
-        // LikeRequest 생성 (필드가 있다면 적절히 설정)
-        LikeRequest likeRequest = LikeRequest.builder()
-                .postId(1L)
-                .build();
-        String requestJson = objectMapper.writeValueAsString(likeRequest);
-
-        // UserService에서 현재 사용자 반환
-        User user = User.builder()
+    @BeforeEach
+    void setUp() throws Exception {
+        // 테스트 사용자 설정
+        testUser = User.builder()
                 .nickname("TestUser")
                 .email("test@test.com")
                 .password("password")
                 .build();
-        when(userService.findById(1L)).thenReturn(user);
-        // likesService.addLike()는 void이므로 아무 동작 없이 처리되도록 설정
-        doNothing().when(likesService).addLike(eq(postId), any(LikeRequest.class), eq(user));
+        when(userService.findById(USER_ID)).thenReturn(testUser);
 
-        // JwtUserDetails 목 객체 생성
-        JwtUserDetails jwtUserDetails = Mockito.mock(JwtUserDetails.class);
-        when(jwtUserDetails.getId()).thenReturn(1L);
+        // JWT 사용자 설정
+        jwtUserDetails = Mockito.mock(JwtUserDetails.class);
+        when(jwtUserDetails.getId()).thenReturn(USER_ID);
         when(jwtUserDetails.getUsername()).thenReturn("test@test.com");
 
-        mockMvc.perform(post("/posts/{postId}/likes", postId)
+        // 좋아요 요청 객체 설정
+        likeRequest = LikeRequest.builder()
+                .postId(POST_ID)
+                .build();
+        requestJson = objectMapper.writeValueAsString(likeRequest);
+    }
+
+    /**
+     * 인증된 요청을 수행하는 헬퍼 메서드
+     */
+    private ResultActions performAuthenticatedRequest(String method, String url, Object content) throws Exception {
+        switch (method) {
+            case "POST":
+                return mockMvc.perform(post(url)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestJson)
+                        .content(objectMapper.writeValueAsString(content))
                         .with(user(jwtUserDetails))
-                        .with(csrf()))
+                        .with(csrf()));
+            case "DELETE":
+                return mockMvc.perform(delete(url)
+                        .with(user(jwtUserDetails))
+                        .with(csrf()));
+            case "GET":
+                return mockMvc.perform(get(url)
+                        .with(user(jwtUserDetails))
+                        .with(csrf()));
+            default:
+                throw new IllegalArgumentException("지원하지 않는 HTTP 메서드: " + method);
+        }
+    }
+
+    @Test
+    @DisplayName("POST /posts/{postId}/likes - 좋아요 추가 성공")
+    public void addLike_success() throws Exception {
+        // Given
+        doNothing().when(likesService).addLike(eq(POST_ID), any(LikeRequest.class), eq(testUser));
+
+        // When & Then
+        performAuthenticatedRequest("POST", "/posts/" + POST_ID + "/likes", likeRequest)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.message").value("like_success"));
     }
@@ -88,22 +118,11 @@ public class LikesControllerTest {
     @Test
     @DisplayName("DELETE /posts/{postId}/likes - 좋아요 제거 성공")
     public void removeLike_success() throws Exception {
-        Long postId = 1L;
-        User user = User.builder()
-                .nickname("TestUser")
-                .email("test@test.com")
-                .password("password")
-                .build();
-        when(userService.findById(1L)).thenReturn(user);
-        doNothing().when(likesService).removeLike(eq(postId), eq(user.getId()), eq(user));
+        // Given
+        doNothing().when(likesService).removeLike(eq(POST_ID), eq(USER_ID), eq(testUser));
 
-        JwtUserDetails jwtUserDetails = Mockito.mock(JwtUserDetails.class);
-        when(jwtUserDetails.getId()).thenReturn(1L);
-        when(jwtUserDetails.getUsername()).thenReturn("test@test.com");
-
-        mockMvc.perform(delete("/posts/{postId}/likes", postId)
-                        .with(user(jwtUserDetails))
-                        .with(csrf()))
+        // When & Then
+        performAuthenticatedRequest("DELETE", "/posts/" + POST_ID + "/likes", null)
                 .andExpect(status().isNoContent())
                 .andExpect(jsonPath("$.message").value("unlike_success"));
     }
@@ -111,20 +130,25 @@ public class LikesControllerTest {
     @Test
     @DisplayName("GET /posts/{postId}/likes/status - 좋아요 상태 조회 성공")
     public void checkLikeStatus_success() throws Exception {
-        Long postId = 1L;
-        // likesRepository.existsByPostIdAndUserId()가 true 반환하도록 설정
-        when(likesRepository.existsByPostIdAndUserId(postId, 1L)).thenReturn(true);
+        // Given
+        when(likesRepository.existsByPostIdAndUserId(POST_ID, USER_ID)).thenReturn(true);
 
-        JwtUserDetails jwtUserDetails = Mockito.mock(JwtUserDetails.class);
-        when(jwtUserDetails.getId()).thenReturn(1L);
-        when(jwtUserDetails.getUsername()).thenReturn("test@test.com");
-
-        mockMvc.perform(get("/posts/{postId}/likes/status", postId)
-                        .with(user(jwtUserDetails))
-                        .with(csrf()))
+        // When & Then
+        performAuthenticatedRequest("GET", "/posts/" + POST_ID + "/likes/status", null)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("success"))
                 .andExpect(jsonPath("$.data").value(true));
+    }
+
+    @Test
+    @DisplayName("인증되지 않은 사용자가 좋아요 추가 시도 시 실패")
+    public void addLike_unauthorized_fails() throws Exception {
+        // When & Then (인증 정보 없이 요청)
+        mockMvc.perform(post("/posts/" + POST_ID + "/likes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson)
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized());
     }
 
     @TestConfiguration
