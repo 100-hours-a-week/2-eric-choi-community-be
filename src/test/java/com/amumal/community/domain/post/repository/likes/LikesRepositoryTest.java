@@ -3,7 +3,9 @@ package com.amumal.community.domain.post.repository.likes;
 import com.amumal.community.domain.post.entity.Likes;
 import com.amumal.community.domain.post.entity.Post;
 import com.amumal.community.domain.user.entity.User;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -16,132 +18,117 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest
 class LikesRepositoryTest {
 
+    // 테스트 상수
+    private static final String USER_NICKNAME = "TestUser";
+    private static final String USER_EMAIL = "test@example.com";
+    private static final String USER_PASSWORD = "password";
+    private static final String POST_TITLE = "Test Post";
+    private static final String POST_CONTENT = "Test Content";
+
     @Autowired
     private LikesRepository likesRepository;
 
     @Autowired
     private TestEntityManager entityManager;
 
-    @Test
-    @DisplayName("존재하는 좋아요 여부 조회")
-    void existsByPostIdAndUserId_true() {
-        // Given: User, Post, Likes 엔티티 생성 후 저장
-        User user = User.builder()
-                .nickname("TestUser")
-                .email("test@example.com")
-                .password("password")
+    // 테스트용 공통 엔티티
+    private User testUser;
+    private Post testPost;
+
+    @BeforeEach
+    void setUp() {
+        // 테스트 데이터 초기화 (매 테스트마다 새로운 엔티티 생성)
+        testUser = User.builder()
+                .nickname(USER_NICKNAME)
+                .email(USER_EMAIL)
+                .password(USER_PASSWORD)
                 .build();
-        entityManager.persist(user);
+        entityManager.persist(testUser);
 
-        Post post = Post.builder()
-                .user(user)
-                .title("Test Post")
-                .content("Test Content")
+        testPost = Post.builder()
+                .user(testUser)
+                .title(POST_TITLE)
+                .content(POST_CONTENT)
                 .build();
-        entityManager.persist(post);
-
-        Likes like = Likes.builder()
-                .post(post)
-                .user(user)
-                .build();
-        entityManager.persist(like);
-        entityManager.flush();
-        entityManager.clear();
-
-        // When: 존재 여부 확인
-        boolean exists = likesRepository.existsByPostIdAndUserId(post.getId(), user.getId());
-
-        // Then
-        assertThat(exists).isTrue();
+        entityManager.persist(testPost);
     }
 
-    @Test
-    @DisplayName("존재하지 않는 좋아요 여부 조회")
-    void existsByPostIdAndUserId_false() {
-        // Given: User, Post 엔티티 저장 (Likes는 저장하지 않음)
-        User user = User.builder()
-                .nickname("TestUser")
-                .email("test@example.com")
-                .password("password")
-                .build();
-        entityManager.persist(user);
+    @Nested
+    @DisplayName("좋아요 존재 여부 조회 테스트")
+    class ExistsByPostIdAndUserIdTest {
 
-        Post post = Post.builder()
-                .user(user)
-                .title("Test Post")
-                .content("Test Content")
-                .build();
-        entityManager.persist(post);
-        entityManager.flush();
-        entityManager.clear();
+        @Test
+        @DisplayName("좋아요가 존재하는 경우 true 반환")
+        void existsByPostIdAndUserId_likeExists_returnsTrue() {
+            // Given: 좋아요 엔티티 생성 후 저장
+            Likes like = Likes.builder()
+                    .post(testPost)
+                    .user(testUser)
+                    .build();
+            entityManager.persist(like);
+            entityManager.flush();
+            entityManager.clear();
 
-        // When: 존재 여부 확인
-        boolean exists = likesRepository.existsByPostIdAndUserId(post.getId(), user.getId());
+            // When
+            boolean exists = likesRepository.existsByPostIdAndUserId(testPost.getId(), testUser.getId());
 
-        // Then
-        assertThat(exists).isFalse();
+            // Then
+            assertThat(exists).isTrue();
+        }
+
+        @Test
+        @DisplayName("좋아요가 존재하지 않는 경우 false 반환")
+        void existsByPostIdAndUserId_likeNotExists_returnsFalse() {
+            // Given: 좋아요 엔티티 저장하지 않음
+            entityManager.flush();
+            entityManager.clear();
+
+            // When
+            boolean exists = likesRepository.existsByPostIdAndUserId(testPost.getId(), testUser.getId());
+
+            // Then
+            assertThat(exists).isFalse();
+        }
     }
 
-    @Test
-    @DisplayName("findByPostIdAndUserId - 좋아요 존재하면 Optional 반환")
-    void findByPostIdAndUserId_exists() {
-        // Given
-        User user = User.builder()
-                .nickname("TestUser")
-                .email("test@example.com")
-                .password("password")
-                .build();
-        entityManager.persist(user);
+    @Nested
+    @DisplayName("좋아요 조회 테스트")
+    class FindByPostIdAndUserIdTest {
 
-        Post post = Post.builder()
-                .user(user)
-                .title("Test Post")
-                .content("Test Content")
-                .build();
-        entityManager.persist(post);
+        @Test
+        @DisplayName("좋아요가 존재하는 경우 Optional에 담아 반환")
+        void findByPostIdAndUserId_likeExists_returnsOptionalWithLike() {
+            // Given
+            Likes like = Likes.builder()
+                    .post(testPost)
+                    .user(testUser)
+                    .build();
+            entityManager.persist(like);
+            entityManager.flush();
+            entityManager.clear();
 
-        Likes like = Likes.builder()
-                .post(post)
-                .user(user)
-                .build();
-        entityManager.persist(like);
-        entityManager.flush();
-        entityManager.clear();
+            // When
+            Optional<Likes> optionalLike = likesRepository.findByPostIdAndUserId(testPost.getId(), testUser.getId());
 
-        // When
-        Optional<Likes> optionalLike = likesRepository.findByPostIdAndUserId(post.getId(), user.getId());
+            // Then
+            assertThat(optionalLike).isPresent();
+            // 엔티티의 관계가 올바르게 매핑되었는지 추가 검증
+            assertThat(optionalLike.get().getUser().getId()).isEqualTo(testUser.getId());
+            assertThat(optionalLike.get().getPost().getId()).isEqualTo(testPost.getId());
+        }
 
-        // Then
-        assertThat(optionalLike).isPresent();
-        // 엔티티의 관계가 올바르게 매핑되었는지 추가 검증
-        assertThat(optionalLike.get().getUser().getId()).isEqualTo(user.getId());
-        assertThat(optionalLike.get().getPost().getId()).isEqualTo(post.getId());
-    }
+        @Test
+        @DisplayName("좋아요가 존재하지 않는 경우 빈 Optional 반환")
+        void findByPostIdAndUserId_likeNotExists_returnsEmptyOptional() {
+            // Given: 좋아요 엔티티 저장하지 않음
+            entityManager.flush();
+            entityManager.clear();
 
-    @Test
-    @DisplayName("findByPostIdAndUserId - 좋아요가 없으면 빈 Optional 반환")
-    void findByPostIdAndUserId_notExists() {
-        // Given
-        User user = User.builder()
-                .nickname("TestUser")
-                .email("test@example.com")
-                .password("password")
-                .build();
-        entityManager.persist(user);
+            // When
+            Optional<Likes> optionalLike = likesRepository.findByPostIdAndUserId(testPost.getId(), testUser.getId());
 
-        Post post = Post.builder()
-                .user(user)
-                .title("Test Post")
-                .content("Test Content")
-                .build();
-        entityManager.persist(post);
-        entityManager.flush();
-        entityManager.clear();
-
-        // When
-        Optional<Likes> optionalLike = likesRepository.findByPostIdAndUserId(post.getId(), user.getId());
-
-        // Then
-        assertThat(optionalLike).isNotPresent();
+            // Then
+            assertThat(optionalLike).isEmpty();
+        }
     }
 }

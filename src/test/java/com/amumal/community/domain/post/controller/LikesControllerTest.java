@@ -11,8 +11,8 @@ import com.amumal.community.global.exception.GlobalExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -25,8 +25,7 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -36,66 +35,77 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = LikesController.class)
 @Import({TestSecurityConfig.class, LikesControllerTest.MockConfig.class, GlobalExceptionHandler.class})
 @ContextConfiguration(classes = {LikesController.class, TestSecurityConfig.class, LikesControllerTest.MockConfig.class, GlobalExceptionHandler.class})
-public class LikesControllerTest {
+class LikesControllerTest {
 
     // 테스트 상수
     private static final Long POST_ID = 1L;
     private static final Long USER_ID = 1L;
+    private static final String USER_EMAIL = "test@test.com";
+    private static final String USER_NICKNAME = "TestUser";
+    private static final String USER_PASSWORD = "password";
+
     @Autowired
     private MockMvc mockMvc;
+
     @Autowired
     private ObjectMapper objectMapper;
+
     @Autowired
     private LikesService likesService;
+
     @Autowired
     private UserService userService;
+
     @Autowired
     private LikesRepository likesRepository;
-    // 테스트 공통 변수
+
+    // 테스트용 공통 변수
     private User testUser;
     private JwtUserDetails jwtUserDetails;
     private LikeRequest likeRequest;
-    private String requestJson;
+    private String likeRequestJson;
 
     @BeforeEach
     void setUp() throws Exception {
         // 테스트 사용자 설정
         testUser = User.builder()
-                .nickname("TestUser")
-                .email("test@test.com")
-                .password("password")
+                .nickname(USER_NICKNAME)
+                .email(USER_EMAIL)
+                .password(USER_PASSWORD)
                 .build();
+
         when(userService.findById(USER_ID)).thenReturn(testUser);
 
         // JWT 사용자 설정
-        jwtUserDetails = Mockito.mock(JwtUserDetails.class);
+        jwtUserDetails = mock(JwtUserDetails.class);
         when(jwtUserDetails.getId()).thenReturn(USER_ID);
-        when(jwtUserDetails.getUsername()).thenReturn("test@test.com");
+        when(jwtUserDetails.getUsername()).thenReturn(USER_EMAIL);
 
         // 좋아요 요청 객체 설정
         likeRequest = LikeRequest.builder()
                 .postId(POST_ID)
                 .build();
-        requestJson = objectMapper.writeValueAsString(likeRequest);
+
+        likeRequestJson = objectMapper.writeValueAsString(likeRequest);
     }
 
     /**
      * 인증된 요청을 수행하는 헬퍼 메서드
      */
-    private ResultActions performAuthenticatedRequest(String method, String url, Object content) throws Exception {
+    private ResultActions performAuthenticatedRequest(String method, String urlTemplate, Object... urlVariables) throws Exception {
         switch (method) {
             case "POST":
-                return mockMvc.perform(post(url)
+                return mockMvc.perform(post(urlTemplate, urlVariables)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(content))
+                        .content(likeRequestJson)
                         .with(user(jwtUserDetails))
                         .with(csrf()));
             case "DELETE":
-                return mockMvc.perform(delete(url)
+                return mockMvc.perform(delete(urlTemplate, urlVariables)
                         .with(user(jwtUserDetails))
                         .with(csrf()));
             case "GET":
-                return mockMvc.perform(get(url)
+                return mockMvc.perform(get(urlTemplate, urlVariables)
                         .with(user(jwtUserDetails))
                         .with(csrf()));
             default:
@@ -103,69 +113,115 @@ public class LikesControllerTest {
         }
     }
 
-    @Test
-    @DisplayName("POST /posts/{postId}/likes - 좋아요 추가 성공")
-    public void addLike_success() throws Exception {
-        // Given
-        doNothing().when(likesService).addLike(eq(POST_ID), any(LikeRequest.class), eq(testUser));
+    @Nested
+    @DisplayName("좋아요 추가 테스트")
+    class AddLikeTest {
 
-        // When & Then
-        performAuthenticatedRequest("POST", "/posts/" + POST_ID + "/likes", likeRequest)
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.message").value("like_success"));
+        @Test
+        @DisplayName("인증된 사용자의 좋아요 추가 요청 성공")
+        void addLike_authenticated_success() throws Exception {
+            // Given
+            doNothing().when(likesService).addLike(eq(POST_ID), any(LikeRequest.class), eq(testUser));
+
+            // When & Then
+            performAuthenticatedRequest("POST", "/posts/{postId}/likes", POST_ID)
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.message").value("like_success"));
+        }
+
+        @Test
+        @DisplayName("인증되지 않은 사용자의 좋아요 추가 요청 실패")
+        void addLike_unauthenticated_fails() throws Exception {
+            // When & Then (인증 정보 없이 요청)
+            mockMvc.perform(post("/posts/{postId}/likes", POST_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(likeRequestJson)
+                            .with(csrf()))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @DisplayName("DELETE /posts/{postId}/likes - 좋아요 제거 성공")
-    public void removeLike_success() throws Exception {
-        // Given
-        doNothing().when(likesService).removeLike(eq(POST_ID), eq(USER_ID), eq(testUser));
+    @Nested
+    @DisplayName("좋아요 제거 테스트")
+    class RemoveLikeTest {
 
-        // When & Then
-        performAuthenticatedRequest("DELETE", "/posts/" + POST_ID + "/likes", null)
-                .andExpect(status().isNoContent())
-                .andExpect(jsonPath("$.message").value("unlike_success"));
+        @Test
+        @DisplayName("인증된 사용자의 좋아요 제거 요청 성공")
+        void removeLike_authenticated_success() throws Exception {
+            // Given
+            doNothing().when(likesService).removeLike(eq(POST_ID), eq(USER_ID), eq(testUser));
+
+            // When & Then
+            performAuthenticatedRequest("DELETE", "/posts/{postId}/likes", POST_ID)
+                    .andExpect(status().isNoContent())
+                    .andExpect(jsonPath("$.message").value("unlike_success"));
+        }
+
+        @Test
+        @DisplayName("인증되지 않은 사용자의 좋아요 제거 요청 실패")
+        void removeLike_unauthenticated_fails() throws Exception {
+            // When & Then (인증 정보 없이 요청)
+            mockMvc.perform(delete("/posts/{postId}/likes", POST_ID)
+                            .with(csrf()))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @Test
-    @DisplayName("GET /posts/{postId}/likes/status - 좋아요 상태 조회 성공")
-    public void checkLikeStatus_success() throws Exception {
-        // Given
-        when(likesRepository.existsByPostIdAndUserId(POST_ID, USER_ID)).thenReturn(true);
+    @Nested
+    @DisplayName("좋아요 상태 확인 테스트")
+    class CheckLikeStatusTest {
 
-        // When & Then
-        performAuthenticatedRequest("GET", "/posts/" + POST_ID + "/likes/status", null)
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("success"))
-                .andExpect(jsonPath("$.data").value(true));
-    }
+        @Test
+        @DisplayName("인증된 사용자의 좋아요 상태 조회 성공 - 좋아요 있음")
+        void checkLikeStatus_authenticated_liked_returnsTrue() throws Exception {
+            // Given
+            when(likesRepository.existsByPostIdAndUserId(POST_ID, USER_ID)).thenReturn(true);
 
-    @Test
-    @DisplayName("인증되지 않은 사용자가 좋아요 추가 시도 시 실패")
-    public void addLike_unauthorized_fails() throws Exception {
-        // When & Then (인증 정보 없이 요청)
-        mockMvc.perform(post("/posts/" + POST_ID + "/likes")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestJson)
-                        .with(csrf()))
-                .andExpect(status().isUnauthorized());
+            // When & Then
+            performAuthenticatedRequest("GET", "/posts/{postId}/likes/status", POST_ID)
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.message").value("success"))
+                    .andExpect(jsonPath("$.data").value(true));
+        }
+
+        @Test
+        @DisplayName("인증된 사용자의 좋아요 상태 조회 성공 - 좋아요 없음")
+        void checkLikeStatus_authenticated_notLiked_returnsFalse() throws Exception {
+            // Given
+            when(likesRepository.existsByPostIdAndUserId(POST_ID, USER_ID)).thenReturn(false);
+
+            // When & Then
+            performAuthenticatedRequest("GET", "/posts/{postId}/likes/status", POST_ID)
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.message").value("success"))
+                    .andExpect(jsonPath("$.data").value(false));
+        }
+
+        @Test
+        @DisplayName("인증되지 않은 사용자의 좋아요 상태 조회 실패")
+        void checkLikeStatus_unauthenticated_fails() throws Exception {
+            // When & Then (인증 정보 없이 요청)
+            mockMvc.perform(get("/posts/{postId}/likes/status", POST_ID)
+                            .with(csrf()))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
     @TestConfiguration
     static class MockConfig {
         @Bean
         public LikesService likesService() {
-            return Mockito.mock(LikesService.class);
+            return mock(LikesService.class);
         }
 
         @Bean
         public UserService userService() {
-            return Mockito.mock(UserService.class);
+            return mock(UserService.class);
         }
 
         @Bean
         public LikesRepository likesRepository() {
-            return Mockito.mock(LikesRepository.class);
+            return mock(LikesRepository.class);
         }
     }
 }
