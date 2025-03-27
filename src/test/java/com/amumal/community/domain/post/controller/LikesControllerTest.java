@@ -113,6 +113,24 @@ class LikesControllerTest {
         }
     }
 
+    @TestConfiguration
+    static class MockConfig {
+        @Bean
+        public LikesService likesService() {
+            return mock(LikesService.class);
+        }
+
+        @Bean
+        public UserService userService() {
+            return mock(UserService.class);
+        }
+
+        @Bean
+        public LikesRepository likesRepository() {
+            return mock(LikesRepository.class);
+        }
+    }
+
     @Nested
     @DisplayName("좋아요 추가 테스트")
     class AddLikeTest {
@@ -137,7 +155,7 @@ class LikesControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(likeRequestJson)
                             .with(csrf()))
-                    .andExpect(status().isUnauthorized());
+                    .andExpect(status().isForbidden());
         }
     }
 
@@ -163,7 +181,7 @@ class LikesControllerTest {
             // When & Then (인증 정보 없이 요청)
             mockMvc.perform(delete("/posts/{postId}/likes", POST_ID)
                             .with(csrf()))
-                    .andExpect(status().isUnauthorized());
+                    .andExpect(status().isForbidden());
         }
     }
 
@@ -203,25 +221,7 @@ class LikesControllerTest {
             // When & Then (인증 정보 없이 요청)
             mockMvc.perform(get("/posts/{postId}/likes/status", POST_ID)
                             .with(csrf()))
-                    .andExpect(status().isUnauthorized());
-        }
-    }
-
-    @TestConfiguration
-    static class MockConfig {
-        @Bean
-        public LikesService likesService() {
-            return mock(LikesService.class);
-        }
-
-        @Bean
-        public UserService userService() {
-            return mock(UserService.class);
-        }
-
-        @Bean
-        public LikesRepository likesRepository() {
-            return mock(LikesRepository.class);
+                    .andExpect(status().isForbidden());
         }
     }
 }

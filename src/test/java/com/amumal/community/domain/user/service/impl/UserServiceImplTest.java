@@ -14,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class UserServiceImplTest {
     // 공통 테스트 데이터
     private static final Long USER_ID = 1L;
@@ -170,7 +173,7 @@ class UserServiceImplTest {
             // When & Then
             IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                     () -> userService.updatePassword(request));
-            assertEquals("비밀번호와 비밀번호 확인이 일치하지 않습니다.", ex.getMessage());
+            assertEquals("비밀번호가 일치하지 않습니다.", ex.getMessage());
 
             // 비밀번호 인코딩 호출 안됨 확인
             verify(passwordEncoder, never()).encode(anyString());

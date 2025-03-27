@@ -6,9 +6,11 @@ import com.amumal.community.domain.post.dto.response.PostResponse;
 import com.amumal.community.domain.post.service.post.PostCommandService;
 import com.amumal.community.domain.post.service.post.PostQueryService;
 import com.amumal.community.domain.user.entity.User;
-import com.amumal.community.global.config.security.JwtUserDetails;
 import com.amumal.community.domain.user.service.UserService;
+import com.amumal.community.global.config.security.JwtUserDetails;
 import com.amumal.community.global.dto.ApiResponse;
+import com.amumal.community.global.enums.CustomResponseStatus;
+import com.amumal.community.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -76,6 +78,10 @@ public class PostController {
     public ResponseEntity<ApiResponse<Void>> deletePost(
             @PathVariable Long postId,
             @AuthenticationPrincipal JwtUserDetails userDetails) {
+
+        if (userDetails == null) {
+            throw new CustomException(CustomResponseStatus.UNAUTHORIZED_REQUEST);
+        }
 
         User currentUser = userService.findById(userDetails.getId());
         postCommandService.deletePost(postId, currentUser);

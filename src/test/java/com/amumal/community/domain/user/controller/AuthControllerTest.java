@@ -14,11 +14,9 @@ import com.amumal.community.global.exception.CustomException;
 import com.amumal.community.global.exception.GlobalExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -33,6 +31,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -52,12 +51,18 @@ class AuthControllerTest {
     private static final String NICKNAME = "TestUser";
     private static final String PROFILE_IMAGE = "dummyProfileImage";
     private static final String REFRESH_TOKEN = "dummyRefreshToken";
+    private static final String NEW_REFRESH_TOKEN = "newDummyRefreshToken";
+    private static final String WRONG_PASSWORD = "wrongpassword";
+
     @Autowired
     private MockMvc mockMvc;
+
     @Autowired
     private ObjectMapper objectMapper;
+
     @Autowired
     private AuthService authService;
+
     @Autowired
     private UserService userService;
 
@@ -65,12 +70,12 @@ class AuthControllerTest {
     static class MockConfig {
         @Bean
         public AuthService authService() {
-            return Mockito.mock(AuthService.class);
+            return mock(AuthService.class);
         }
 
         @Bean
         public UserService userService() {
-            return Mockito.mock(UserService.class);
+            return mock(UserService.class);
         }
     }
 
@@ -78,25 +83,17 @@ class AuthControllerTest {
     @DisplayName("로그인 테스트")
     class LoginTest {
 
-        private LoginRequest loginRequest;
-        private AuthResponse authResponse;
-
-        @BeforeEach
-        void setUp() {
-            // 로그인 요청 설정
-            loginRequest = new LoginRequest();
+        @Test
+        @DisplayName("로그인 성공")
+        void login_validCredentials_success() throws Exception {
+            // Given
+            LoginRequest loginRequest = new LoginRequest();
             loginRequest.setEmail(EMAIL);
             loginRequest.setPassword(PASSWORD);
 
-            // 인증 응답 설정
-            authResponse = new AuthResponse();
+            AuthResponse authResponse = new AuthResponse();
             authResponse.setRefreshToken(REFRESH_TOKEN);
-        }
 
-        @Test
-        @DisplayName("로그인 성공 케이스")
-        public void login_Success() throws Exception {
-            // Given
             when(authService.login(any(LoginRequest.class))).thenReturn(authResponse);
 
             // When & Then
@@ -111,12 +108,12 @@ class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("로그인 실패 케이스 - 잘못된 비밀번호")
-        public void login_InvalidCredentials_Fails() throws Exception {
+        @DisplayName("로그인 실패 - 잘못된 비밀번호")
+        void login_invalidCredentials_fails() throws Exception {
             // Given
-            LoginRequest invalidRequest = new LoginRequest();
-            invalidRequest.setEmail(EMAIL);
-            invalidRequest.setPassword("wrongpassword");
+            LoginRequest loginRequest = new LoginRequest();
+            loginRequest.setEmail(EMAIL);
+            loginRequest.setPassword(WRONG_PASSWORD);
 
             when(authService.login(any(LoginRequest.class)))
                     .thenThrow(new CustomException(CustomResponseStatus.UNAUTHORIZED, "Invalid credentials"));
@@ -124,7 +121,7 @@ class AuthControllerTest {
             // When & Then
             mockMvc.perform(post("/users/auth")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(invalidRequest))
+                            .content(objectMapper.writeValueAsString(loginRequest))
                             .with(csrf()))
                     .andExpect(status().isUnauthorized())
                     .andExpect(jsonPath("$.message").value("unauthorized"));
@@ -135,34 +132,25 @@ class AuthControllerTest {
     @DisplayName("회원가입 테스트")
     class SignupTest {
 
-        private SignupRequest signupRequest;
-        private MockMultipartFile userInfoPart;
-        private MockMultipartFile filePart;
-
-        @BeforeEach
-        void setUp() throws Exception {
-            // 회원가입 요청 설정
-            signupRequest = new SignupRequest();
+        @Test
+        @DisplayName("회원가입 성공")
+        void signup_validRequest_success() throws Exception {
+            // Given
+            SignupRequest signupRequest = new SignupRequest();
             signupRequest.setEmail("newuser@example.com");
             signupRequest.setPassword(PASSWORD);
             signupRequest.setNickname("newuser");
 
-            // Multipart 파일 설정
-            userInfoPart = new MockMultipartFile(
+            when(authService.signup(any(SignupRequest.class), any()))
+                    .thenReturn(USER_ID);
+
+            MockMultipartFile userInfoPart = new MockMultipartFile(
                     "userInfo", "", "application/json",
                     objectMapper.writeValueAsBytes(signupRequest));
 
-            filePart = new MockMultipartFile(
+            MockMultipartFile filePart = new MockMultipartFile(
                     "profileImage", "profile.png", MediaType.IMAGE_PNG_VALUE,
                     "dummyImageContent".getBytes());
-        }
-
-        @Test
-        @DisplayName("회원가입 성공 케이스")
-        public void signup_Success() throws Exception {
-            // Given
-            when(authService.signup(any(SignupRequest.class), any()))
-                    .thenReturn(USER_ID);
 
             // When & Then
             mockMvc.perform(MockMvcRequestBuilders.multipart("/users/new")
@@ -175,11 +163,20 @@ class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("회원가입 실패 케이스 - 예외 발생")
-        public void signup_Exception_Fails() throws Exception {
+        @DisplayName("회원가입 실패 - 예외 발생")
+        void signup_exception_fails() throws Exception {
             // Given
+            SignupRequest signupRequest = new SignupRequest();
+            signupRequest.setEmail("newuser@example.com");
+            signupRequest.setPassword(PASSWORD);
+            signupRequest.setNickname("newuser");
+
             when(authService.signup(any(SignupRequest.class), any()))
                     .thenThrow(new RuntimeException("Registration failed"));
+
+            MockMultipartFile userInfoPart = new MockMultipartFile(
+                    "userInfo", "", "application/json",
+                    objectMapper.writeValueAsBytes(signupRequest));
 
             // When & Then
             mockMvc.perform(MockMvcRequestBuilders.multipart("/users/new")
@@ -193,19 +190,13 @@ class AuthControllerTest {
     @DisplayName("토큰 관련 테스트")
     class TokenTest {
 
-        private AuthResponse authResponse;
-
-        @BeforeEach
-        void setUp() {
-            // 인증 응답 설정
-            authResponse = new AuthResponse();
-            authResponse.setRefreshToken("newDummyRefreshToken");
-        }
-
         @Test
-        @DisplayName("토큰 재발급 성공 케이스")
-        public void refreshToken_Success() throws Exception {
+        @DisplayName("토큰 재발급 성공")
+        void refreshToken_validToken_success() throws Exception {
             // Given
+            AuthResponse authResponse = new AuthResponse();
+            authResponse.setRefreshToken(NEW_REFRESH_TOKEN);
+
             when(authService.refreshToken(any(String.class))).thenReturn(authResponse);
 
             // When & Then
@@ -219,8 +210,8 @@ class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("토큰 재발급 실패 케이스 - 쿠키 없음")
-        public void refreshToken_NoCookie_Fails() throws Exception {
+        @DisplayName("토큰 재발급 실패 - 쿠키 없음")
+        void refreshToken_noCookie_fails() throws Exception {
             // When & Then
             mockMvc.perform(post("/users/refresh")
                             .with(csrf()))
@@ -229,8 +220,8 @@ class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("토큰 재발급 실패 케이스 - 토큰 만료")
-        public void refreshToken_Expired_Fails() throws Exception {
+        @DisplayName("토큰 재발급 실패 - 토큰 만료")
+        void refreshToken_expired_fails() throws Exception {
             // Given
             when(authService.refreshToken(any(String.class)))
                     .thenThrow(new RuntimeException("Token expired"));
@@ -244,8 +235,8 @@ class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("로그아웃 성공 테스트")
-        public void logout_Success() throws Exception {
+        @DisplayName("로그아웃 성공")
+        void logout_success() throws Exception {
             // When & Then
             mockMvc.perform(post("/users/logout")
                             .with(csrf()))
@@ -259,38 +250,31 @@ class AuthControllerTest {
     @DisplayName("사용자 정보 조회 테스트")
     class UserInfoTest {
 
-        private JwtUserDetails dummyUserDetails;
-        private User dummyUserEntity;
-        private UserInfoResponse userInfoResponse;
-
-        @BeforeEach
-        void setUp() {
-            // JwtUserDetails 설정
-            dummyUserDetails = Mockito.mock(JwtUserDetails.class);
+        @Test
+        @DisplayName("현재 사용자 정보 조회 성공")
+        void getCurrentUser_authenticated_success() throws Exception {
+            // Given
+            JwtUserDetails dummyUserDetails = mock(JwtUserDetails.class);
             when(dummyUserDetails.getId()).thenReturn(USER_ID);
             when(dummyUserDetails.getUsername()).thenReturn(EMAIL);
 
-            // User 엔티티 설정
-            dummyUserEntity = User.builder()
+            User dummyUserEntity = User.builder()
                     .id(USER_ID)
                     .email(EMAIL)
                     .nickname(NICKNAME)
                     .password("encodedPassword")
                     .profileImage(PROFILE_IMAGE)
                     .build();
+
             when(userService.findById(USER_ID)).thenReturn(dummyUserEntity);
 
-            // UserInfoResponse 설정
-            userInfoResponse = new UserInfoResponse();
+            UserInfoResponse userInfoResponse = new UserInfoResponse();
             userInfoResponse.setEmail(EMAIL);
             userInfoResponse.setNickname(NICKNAME);
             userInfoResponse.setProfileImage(PROFILE_IMAGE);
-            when(authService.convertToUserResponse(dummyUserEntity)).thenReturn(userInfoResponse);
-        }
 
-        @Test
-        @DisplayName("현재 사용자 정보 조회 성공 케이스")
-        public void getCurrentUser_Success() throws Exception {
+            when(authService.convertToUserResponse(dummyUserEntity)).thenReturn(userInfoResponse);
+
             // When & Then
             mockMvc.perform(get("/users/me")
                             .with(user(dummyUserDetails)))
@@ -302,8 +286,8 @@ class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("현재 사용자 정보 조회 실패 케이스 - 미인증")
-        public void getCurrentUser_Unauthorized_Fails() throws Exception {
+        @DisplayName("현재 사용자 정보 조회 실패 - 미인증")
+        void getCurrentUser_unauthenticated_fails() throws Exception {
             // When & Then (인증 정보 없이 요청)
             mockMvc.perform(get("/users/me"))
                     .andExpect(status().isUnauthorized())

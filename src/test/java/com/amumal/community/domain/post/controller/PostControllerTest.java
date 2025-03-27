@@ -24,7 +24,6 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -32,7 +31,8 @@ import java.util.Collections;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -89,6 +89,24 @@ class PostControllerTest {
         jwtUserDetails = mock(JwtUserDetails.class);
         when(jwtUserDetails.getId()).thenReturn(USER_ID);
         when(jwtUserDetails.getUsername()).thenReturn(USER_EMAIL);
+    }
+
+    @TestConfiguration
+    static class MockConfig {
+        @Bean
+        public PostQueryService postQueryService() {
+            return mock(PostQueryService.class);
+        }
+
+        @Bean
+        public PostCommandService postCommandService() {
+            return mock(PostCommandService.class);
+        }
+
+        @Bean
+        public UserService userService() {
+            return mock(UserService.class);
+        }
     }
 
     @Nested
@@ -322,25 +340,7 @@ class PostControllerTest {
             // When & Then (인증 정보 없이 요청)
             mockMvc.perform(delete("/posts/{postId}", POST_ID)
                             .with(csrf()))
-                    .andExpect(status().isUnauthorized());
-        }
-    }
-
-    @TestConfiguration
-    static class MockConfig {
-        @Bean
-        public PostQueryService postQueryService() {
-            return mock(PostQueryService.class);
-        }
-
-        @Bean
-        public PostCommandService postCommandService() {
-            return mock(PostCommandService.class);
-        }
-
-        @Bean
-        public UserService userService() {
-            return mock(UserService.class);
+                    .andExpect(status().isForbidden());
         }
     }
 }

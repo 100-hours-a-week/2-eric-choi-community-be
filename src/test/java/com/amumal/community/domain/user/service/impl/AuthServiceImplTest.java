@@ -77,8 +77,6 @@ class AuthServiceImplTest {
 
             // 기본 모킹 설정
             when(userRepository.existsByEmail(EMAIL)).thenReturn(false);
-            when(userRepository.existsByNickname(NICKNAME)).thenReturn(false);
-            when(passwordEncoder.encode(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
         }
 
         @Test
@@ -190,16 +188,18 @@ class AuthServiceImplTest {
                     .profileImage(IMAGE_URL)
                     .build();
 
-            // 기본 모킹 설정
-            when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-            when(passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
-            when(jwtUtil.generateToken(USER_ID, EMAIL)).thenReturn(ACCESS_TOKEN);
-            when(jwtUtil.generateRefreshToken(USER_ID, EMAIL)).thenReturn(REFRESH_TOKEN);
         }
 
         @Test
         @DisplayName("로그인 성공")
         void login_Success() {
+            // Given
+            // 스텁을 명시적으로 설정
+            when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+            when(passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
+            when(jwtUtil.generateToken(USER_ID, EMAIL)).thenReturn(ACCESS_TOKEN);
+            when(jwtUtil.generateRefreshToken(USER_ID, EMAIL)).thenReturn(REFRESH_TOKEN);
+
             // When
             AuthResponse response = authService.login(loginRequest);
 
@@ -231,7 +231,6 @@ class AuthServiceImplTest {
             // Given
             String wrongPassword = "wrongPassword";
             LoginRequest invalidRequest = new LoginRequest(EMAIL, wrongPassword);
-            when(passwordEncoder.matches(wrongPassword, ENCODED_PASSWORD)).thenReturn(false);
 
             // When & Then
             assertThrows(IllegalArgumentException.class, () -> authService.login(invalidRequest));
