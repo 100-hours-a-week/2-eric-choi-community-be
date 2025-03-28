@@ -56,6 +56,7 @@ public class PostController {
             @AuthenticationPrincipal JwtUserDetails userDetails) {
 
         User currentUser = userService.findById(userDetails.getId());
+        System.out.println("request = " + request);
         Long postId = postCommandService.createPost(request, image, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>("create_post_success", postId));
