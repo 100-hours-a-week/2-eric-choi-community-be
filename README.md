@@ -67,7 +67,7 @@ AmuMal Community Service는 **아무말(AmuMal) 서비스**의 커뮤니티 기�
 ---
 
 ## 시스템 아키텍처
-
+```
    ┌─────────────┐
    │   클라이언트   │
    └─────────────┘
@@ -86,7 +86,7 @@ AmuMal Community Service는 **아무말(AmuMal) 서비스**의 커뮤니티 기�
    ┌─────────────┐
    │    AWS S3   │
    └─────────────┘
-
+```
 
 - **레이어드 아키텍처:** Controller - Service - Repository 계층 구조 구현
 - **JWT 인증:** 토큰 기반 사용자 인증 체계 구현
@@ -162,7 +162,7 @@ AmuMal Community Service는 **아무말(AmuMal) 서비스**의 커뮤니티 기�
     ```
 ---
 ## 프로젝트 구조
-
+```
 src
 ├── main
 │   ├── java
@@ -207,6 +207,7 @@ src
                     │       ├── repository
                     │       └── service
                     └── global
+```
 ---
 ## 배운 점 및 향후 개선 사항
 
