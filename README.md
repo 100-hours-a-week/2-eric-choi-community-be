@@ -30,7 +30,7 @@ AmuMal Community Service는 **아무말(AmuMal) 서비스**의 커뮤니티 기�
 
 ### 백엔드
 - **Java 21**
-- **Spring Boot 3.x**
+- **Spring Boot 3.4.3**
 - **Spring Security & JWT**
 - **Spring Data JPA**
 - **MySQL**
