@@ -2,6 +2,8 @@ package com.amumal.community.domain.user.dto.response;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -12,4 +14,7 @@ public class UserInfoResponse {
     private String email;
     private String nickname;
     private String profileImage;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 }

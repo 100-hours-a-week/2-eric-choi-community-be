@@ -6,16 +6,19 @@ import com.amumal.community.domain.post.dto.response.PostResponse;
 import com.amumal.community.domain.post.service.post.PostCommandService;
 import com.amumal.community.domain.post.service.post.PostQueryService;
 import com.amumal.community.domain.user.entity.User;
-import com.amumal.community.domain.user.service.UserQueryService;
 import com.amumal.community.domain.user.service.UserService;
+import com.amumal.community.global.config.security.JwtUserDetails;
 import com.amumal.community.global.dto.ApiResponse;
-import com.amumal.community.global.util.SessionUtil;
-import jakarta.servlet.http.HttpServletRequest;
+import com.amumal.community.global.enums.CustomResponseStatus;
+import com.amumal.community.global.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/posts")
@@ -38,46 +41,36 @@ public class PostController {
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostDetailResponse>> getPostDetail(
             @PathVariable Long postId,
-            HttpServletRequest request,
+            @AuthenticationPrincipal(expression = "id") Long userId,
             @RequestParam(value = "incrementView", defaultValue = "true") Boolean incrementView) {
 
-        // 세션 확인 없이 게시글 조회 가능 (선택적)
-        Long userId = SessionUtil.getLoggedInUserId(request);
-        User currentUser = userId != null ? userService.findById(userId) : null;
-
+        // 인증된 사용자가 없어도 게시글 조회는 가능
         PostDetailResponse response = postQueryService.getPostDetailInfoById(postId, incrementView);
         return ResponseEntity.ok(new ApiResponse<>("fetch_post_detail_success", response));
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> createPost(
-            @Validated @RequestBody PostRequest request,
-            HttpServletRequest httpRequest) {
+            @RequestPart("postInfo") @Validated PostRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @AuthenticationPrincipal JwtUserDetails userDetails) {
 
-        User currentUser = SessionUtil.getCurrentUser(httpRequest, userService);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>("unauthorized", null));
-        }
-
-        Long postId = postCommandService.createPost(request, currentUser);
+        User currentUser = userService.findById(userDetails.getId());
+        System.out.println("request = " + request);
+        Long postId = postCommandService.createPost(request, image, currentUser);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new ApiResponse<>("create_post_success", postId));
     }
 
-    @PatchMapping("/{postId}")
+    @PatchMapping(value = "/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Void>> updatePost(
             @PathVariable Long postId,
-            @Validated @RequestBody PostRequest request,
-            HttpServletRequest httpRequest) {
+            @RequestPart("postInfo") @Validated PostRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @AuthenticationPrincipal JwtUserDetails userDetails) {
 
-        User currentUser = SessionUtil.getCurrentUser(httpRequest, userService);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>("unauthorized", null));
-        }
-
-        postCommandService.updatePost(postId, request, currentUser);
+        User currentUser = userService.findById(userDetails.getId());
+        postCommandService.updatePost(postId, request, image, currentUser);
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .body(new ApiResponse<>("update_post_success", null));
     }
@@ -85,14 +78,13 @@ public class PostController {
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> deletePost(
             @PathVariable Long postId,
-            HttpServletRequest httpRequest) {
+            @AuthenticationPrincipal JwtUserDetails userDetails) {
 
-        User currentUser = SessionUtil.getCurrentUser(httpRequest, userService);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>("unauthorized", null));
+        if (userDetails == null) {
+            throw new CustomException(CustomResponseStatus.UNAUTHORIZED_REQUEST);
         }
 
+        User currentUser = userService.findById(userDetails.getId());
         postCommandService.deletePost(postId, currentUser);
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .body(new ApiResponse<>("delete_post_success", null));

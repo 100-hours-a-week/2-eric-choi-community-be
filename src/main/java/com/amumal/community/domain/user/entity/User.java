@@ -1,9 +1,9 @@
 package com.amumal.community.domain.user.entity;
 
+import com.amumal.community.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(name = "users")
-public class User implements Serializable { // Serializable 인터페이스 추가
+public class User extends BaseEntity implements Serializable { // BaseEntity 상속 추가
     private static final long serialVersionUID = 1L;
 
     @Id
@@ -33,26 +33,6 @@ public class User implements Serializable { // Serializable 인터페이스 추�
     @Builder.Default
     private String profileImage = "";
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
     // 사용자 프로필 업데이트 메서드
     public void updateProfile(String nickname, String profileImage) {
         this.nickname = nickname;
@@ -64,8 +44,5 @@ public class User implements Serializable { // Serializable 인터페이스 추�
         this.password = encodedPassword;
     }
 
-    // 논리적 삭제 처리 메서드
-    public void delete() {
-        this.deletedAt = LocalDateTime.now();
-    }
+    // BaseEntity에 이미 delete() 메서드가 있으므로 제거
 }
