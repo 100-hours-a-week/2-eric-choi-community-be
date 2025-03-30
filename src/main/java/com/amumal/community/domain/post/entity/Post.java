@@ -22,16 +22,16 @@ public class Post extends BaseEntity {
     private Long id;
 
     // 작성자: User 엔티티와 다대일 관계
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // 댓글: 일대다 관계 (Cascade 및 orphanRemoval 옵션 적용)
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    // 댓글: 일대다 관계 (Cascade, orphanRemoval 적용)
+    @OneToMany(mappedBy = "post", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
-    // 좋아요: 일대다 관계 (Cascade 및 orphanRemoval 옵션 적용)
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    // 좋아요: 일대다 관계 (Cascade, orphanRemoval 적용)
+    @OneToMany(mappedBy = "post", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
     private List<Likes> likes = new ArrayList<>();
 
     @Column(name = "title", length = 30, nullable = false)
@@ -51,16 +51,16 @@ public class Post extends BaseEntity {
     // BaseEntity의 onCreate() 후 추가 초기화
     @Override
     protected void onCreate() {
-        super.onCreate();
+        super.onCreate();  // createdAt, updatedAt 설정
         this.viewCount = 0;
     }
 
-    // 조회수 증가 메서드
+    // 조회수 증가 메서드 - 유지 (단순한 상태 변경)
     public void incrementViewCount() {
         this.viewCount++;
     }
 
-    // 게시글 내용 업데이트 메서드
+    // 게시글 내용 업데이트 메서드 - 유지 (단순한 상태 변경)
     public void updateContent(String title, String content, String image) {
         this.title = title;
         this.content = content;

@@ -1,14 +1,9 @@
 package com.amumal.community.domain.user.entity;
 
-import com.amumal.community.domain.post.entity.Comment;
-import com.amumal.community.domain.post.entity.Likes;
-import com.amumal.community.domain.post.entity.Post;
 import com.amumal.community.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter
@@ -16,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(name = "users")
-public class User extends BaseEntity implements Serializable {
+public class User extends BaseEntity implements Serializable { // BaseEntity 상속 추가
     private static final long serialVersionUID = 1L;
 
     @Id
@@ -38,17 +33,6 @@ public class User extends BaseEntity implements Serializable {
     @Builder.Default
     private String profileImage = "";
 
-    // 게시글과 댓글, 좋아요에 대한 관계 설정
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Post> posts = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comment> comments = new ArrayList<>();
-
-    // 추가: 좋아요와의 관계 설정
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Likes> likes = new ArrayList<>();
-
     // 사용자 프로필 업데이트 메서드
     public void updateProfile(String nickname, String profileImage) {
         this.nickname = nickname;
@@ -59,5 +43,6 @@ public class User extends BaseEntity implements Serializable {
     public void updatePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
-}
 
+    // BaseEntity에 이미 delete() 메서드가 있으므로 제거
+}
