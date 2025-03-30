@@ -2,107 +2,154 @@ package com.amumal.community.domain.user.controller;
 
 import com.amumal.community.domain.user.dto.request.LoginRequest;
 import com.amumal.community.domain.user.dto.request.SignupRequest;
+import com.amumal.community.domain.user.dto.response.AuthResponse;
+import com.amumal.community.domain.user.dto.response.UserInfoResponse;
 import com.amumal.community.domain.user.entity.User;
+import com.amumal.community.global.config.security.JwtUserDetails;
 import com.amumal.community.domain.user.service.AuthService;
-import com.amumal.community.domain.user.service.UserService;  // 추가: 사용자 조회를 위한 서비스
+import com.amumal.community.domain.user.service.UserService;
 import com.amumal.community.global.dto.ApiResponse;
-import com.amumal.community.global.util.SessionUtil;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.Duration;
+
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class AuthController {
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
-    private final UserService userService;  // 추가: 사용자 조회를 위한 서비스
+    private final UserService userService;
 
-    @PostMapping("/new")
-    public ResponseEntity<ApiResponse<Long>> register(@Validated @RequestBody SignupRequest signupRequest) {
-        Long userId = authService.signup(signupRequest);
+    @PostMapping("/auth")
+    public ResponseEntity<ApiResponse<AuthResponse>> login(
+            @RequestBody LoginRequest loginRequest,
+            HttpServletResponse response) {
+
+        AuthResponse authResponse = authService.login(loginRequest);
+
+        // 리프레시 토큰을 HttpOnly 쿠키로 설정
+        ResponseCookie cookie = ResponseCookie.from("refresh_token", authResponse.getRefreshToken())
+                .httpOnly(true)
+                .secure(true) // HTTPS 환경에서는 true로 설정
+                .sameSite("Strict")
+                .maxAge(Duration.ofDays(14)) // 리프레시 토큰 유효기간과 일치
+                .path("/users/refresh") // 리프레시 엔드포인트에서만 사용 가능
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        // 응답에서 리프레시 토큰 제거
+        authResponse.setRefreshToken(null);
+
+        return ResponseEntity.ok(new ApiResponse<>("login_success", authResponse));
+    }
+
+    @PostMapping(value = "/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Long>> register(
+            @RequestPart(value = "userInfo") @Validated SignupRequest signupRequest,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+
+        Long userId = authService.signup(signupRequest, profileImage);
         ApiResponse<Long> response = new ApiResponse<>("register_success", userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PostMapping("/auth")
-    public ResponseEntity<ApiResponse<User>> login(@Validated @RequestBody LoginRequest loginRequest, HttpServletRequest request) {
-        // 로그인 처리
-        User user = authService.login(loginRequest);
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(
+            HttpServletRequest request,
+            HttpServletResponse response) {
 
-        // 세션에 사용자 정보 저장
-        SessionUtil.setLoggedInUser(request, user);
-        logger.info("로그인 성공: {}, 세션 ID: {}", user.getEmail(), SessionUtil.getSessionId(request));
+        // 쿠키에서 리프레시 토큰 추출
+        String refreshToken = extractRefreshTokenFromCookies(request);
 
-        // 클라이언트에 반환할 사용자 정보에서 민감한 정보 제거
-        User userResponse = sanitizeUserForResponse(user);
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>("invalid_refresh_token", null));
+        }
 
-        ApiResponse<User> response = new ApiResponse<>("login_success", userResponse);
-        return ResponseEntity.ok(response);
+        try {
+            AuthResponse authResponse = authService.refreshToken(refreshToken);
+
+            // 새 리프레시 토큰으로 쿠키 업데이트
+            ResponseCookie cookie = ResponseCookie.from("refresh_token", authResponse.getRefreshToken())
+                    .httpOnly(true)
+                    .secure(true)
+                    .sameSite("Strict")
+                    .maxAge(Duration.ofDays(14))
+                    .path("/users/refresh")
+                    .build();
+
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+            // 응답에서 리프레시 토큰 제거
+            authResponse.setRefreshToken(null);
+
+            return ResponseEntity.ok(new ApiResponse<>("token_refresh_success", authResponse));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>("token_refresh_failed", null));
+        }
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
-        // 세션 무효화
-        SessionUtil.invalidateSession(request);
-        logger.info("로그아웃 성공");
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
+        // 리프레시 토큰 쿠키 삭제
+        ResponseCookie cookie = ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("Strict")
+                .maxAge(0) // 즉시 만료
+                .path("/users/refresh")
+                .build();
 
-        ApiResponse<Void> response = new ApiResponse<>("logout_success", null);
-        return ResponseEntity.ok(response);
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        return ResponseEntity.ok(new ApiResponse<>("logout_success", null));
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<User>> getCurrentUser(HttpServletRequest request) {
-        // 세션에서 로그인된 사용자 ID 가져오기
-        Long userId = SessionUtil.getLoggedInUserId(request);
+    public ResponseEntity<ApiResponse<UserInfoResponse>> getCurrentUser(
+            @AuthenticationPrincipal JwtUserDetails userDetails) {
 
-        if (userId == null) {
+        if (userDetails == null) {
             logger.warn("인증되지 않은 사용자의 접근 시도");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                     new ApiResponse<>("unauthorized", null)
             );
         }
 
-        // ID로 사용자 정보 조회
-        User user = userService.findById(userId);
-
-        if (user == null) {
-            logger.warn("세션에 저장된 ID({})에 해당하는 사용자가 없음", userId);
-            SessionUtil.invalidateSession(request);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                    new ApiResponse<>("unauthorized", null)
-            );
-        }
-
+        User user = userService.findById(userDetails.getId());
         logger.info("현재 로그인된 사용자 정보 조회: {}", user.getEmail());
 
-        // 클라이언트에 반환할 사용자 정보에서 민감한 정보 제거
-        User userResponse = sanitizeUserForResponse(user);
+        // AuthService를 통해 User를 DTO로 변환
+        UserInfoResponse userResponse = authService.convertToUserResponse(user);
 
-        ApiResponse<User> response = new ApiResponse<>("success", userResponse);
+        ApiResponse<UserInfoResponse> response = new ApiResponse<>("success", userResponse);
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * 클라이언트에 전송하기 전에 사용자 객체에서 민감한 정보를 제거하는 메서드
-     */
-    private User sanitizeUserForResponse(User user) {
-        // Builder 패턴을 사용하여 비밀번호를 제외한 새 User 객체 생성
-        return User.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .nickname(user.getNickname())
-                .profileImage(user.getProfileImage())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .deletedAt(user.getDeletedAt())
-                // password는 의도적으로 제외
-                .build();
+    // 쿠키에서 리프레시 토큰 추출
+    private String extractRefreshTokenFromCookies(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("refresh_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
     }
 }

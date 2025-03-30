@@ -20,7 +20,4 @@ public class UserUpdateRequest {
     @Size(max = 10)
     private String nickname;
 
-    @Lob
-    @Column(columnDefinition = "LONGTEXT")
-    private String profileImage;
 }
