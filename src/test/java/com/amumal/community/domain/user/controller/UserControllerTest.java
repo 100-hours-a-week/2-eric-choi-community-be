@@ -1,6 +1,6 @@
 package com.amumal.community.domain.user.controller;
 
-import com.amumal.community.domain.TestSecurityConfig;
+import com.amumal.community.TestSecurityConfig;
 import com.amumal.community.domain.user.dto.request.PasswordUpdateRequest;
 import com.amumal.community.domain.user.dto.request.UserUpdateRequest;
 import com.amumal.community.domain.user.dto.response.UserInfoResponse;

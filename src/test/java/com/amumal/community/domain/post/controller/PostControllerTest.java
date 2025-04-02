@@ -1,6 +1,6 @@
 package com.amumal.community.domain.post.controller;
 
-import com.amumal.community.domain.TestSecurityConfig;
+import com.amumal.community.TestSecurityConfig;
 import com.amumal.community.domain.post.dto.request.PostRequest;
 import com.amumal.community.domain.post.dto.response.PostDetailResponse;
 import com.amumal.community.domain.post.dto.response.PostResponse;
