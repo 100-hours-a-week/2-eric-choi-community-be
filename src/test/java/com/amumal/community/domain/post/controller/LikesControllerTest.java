@@ -1,6 +1,6 @@
 package com.amumal.community.domain.post.controller;
 
-import com.amumal.community.domain.TestSecurityConfig;
+import com.amumal.community.TestSecurityConfig;
 import com.amumal.community.domain.post.dto.request.LikeRequest;
 import com.amumal.community.domain.post.repository.likes.LikesRepository;
 import com.amumal.community.domain.post.service.likes.LikesService;

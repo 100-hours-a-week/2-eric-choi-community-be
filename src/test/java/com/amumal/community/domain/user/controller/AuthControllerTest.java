@@ -1,6 +1,6 @@
 package com.amumal.community.domain.user.controller;
 
-import com.amumal.community.domain.TestSecurityConfig;
+import com.amumal.community.TestSecurityConfig;
 import com.amumal.community.domain.user.dto.request.LoginRequest;
 import com.amumal.community.domain.user.dto.request.SignupRequest;
 import com.amumal.community.domain.user.dto.response.AuthResponse;

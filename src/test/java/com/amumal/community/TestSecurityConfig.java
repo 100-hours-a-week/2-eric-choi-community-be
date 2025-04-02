@@ -1,4 +1,4 @@
-package com.amumal.community.domain;
+package com.amumal.community;
 
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
